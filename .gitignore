@@ -4,6 +4,7 @@
 /build
 /postgres
 .env
+pnpm-lock.yaml
 
 # Logs
 logs
