@@ -1,34 +1,29 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { CreateAvailableHourDto } from './availableHours/dto/create-available-hour.dto';
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
-import { UpdateBookingDto } from './dto/update-booking.dto';
 
-@Controller('booking')
+@Controller('v1/booking')
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
   @Post()
   create(@Body() createBookingDto: CreateBookingDto) {
-    return this.bookingService.create(createBookingDto);
+    return this.bookingService.createBooking(createBookingDto);
   }
 
-  @Get()
-  findAll() {
-    return this.bookingService.findAll();
+  @Get(':date')
+  getBookingsByDate(@Param('date') date: string) {
+    return this.bookingService.getBookingsByDate(date);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.bookingService.findOne(+id);
+  @Post('create/available-hours')
+  addAvailableHour(@Body() createAvailableHourDto: CreateAvailableHourDto) {
+    return this.bookingService.addAvailableHour(createAvailableHourDto);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBookingDto: UpdateBookingDto) {
-    return this.bookingService.update(+id, updateBookingDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.bookingService.remove(+id);
+  @Get('available-hours')
+  getAvailableHours() {
+    return this.bookingService.getAvailableHours();
   }
 }

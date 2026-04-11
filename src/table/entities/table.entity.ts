@@ -6,7 +6,7 @@ export class Table {
   @PrimaryColumn({
     type: 'int',
   })
-  tableNumber: number;
+  number: number;
 
   @Column({
     type: 'int',

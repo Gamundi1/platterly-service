@@ -1,6 +1,6 @@
+import { Table } from 'src/table/entities/table.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { AvailableHours } from '../availableHours/entities/available-hours.entity';
-import { Table } from 'src/table/entities/table.entity';
 
 @Entity()
 export class Booking {
@@ -14,6 +14,11 @@ export class Booking {
     type: 'date',
   })
   date: string;
+
+  @Column({
+    enum: ['confirmed', 'cancelled', 'active', 'completed'],
+  })
+  status: string;
 
   @ManyToOne(() => AvailableHours, (availableHours) => availableHours.bookings)
   availableHours: AvailableHours;
