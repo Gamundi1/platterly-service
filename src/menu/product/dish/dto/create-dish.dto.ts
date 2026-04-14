@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  IsUUID,
 } from 'class-validator';
 import { CreateProductDto } from 'src/menu/product/dto/create-product';
 
@@ -18,6 +19,6 @@ export class CreateDishDto extends CreateProductDto {
   images: string[];
 
   @IsArray()
-  @IsString({ each: true })
+  @IsUUID('4', { each: true })
   ingredients: string[];
 }

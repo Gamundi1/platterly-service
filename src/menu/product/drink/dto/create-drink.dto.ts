@@ -4,6 +4,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   Min,
   MinLength,
 } from 'class-validator';
@@ -22,7 +23,7 @@ export class CreateDrinkDto extends CreateProductDto {
   isAlcoholic: boolean;
 
   @IsArray()
-  @IsString({ each: true })
+  @IsUUID('4', { each: true })
   @IsOptional()
   allergens?: string[];
 }

@@ -12,7 +12,7 @@ export class BookingController {
     return this.bookingService.createBooking(createBookingDto);
   }
 
-  @Get(':date')
+  @Get('active/:date')
   getBookingsByDate(@Param('date') date: string) {
     return this.bookingService.getBookingsByDate(date);
   }

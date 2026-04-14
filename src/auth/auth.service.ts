@@ -30,6 +30,7 @@ export class AuthService {
   async register(user: CreateUserDto): Promise<JwtUser> {
     const newUser = await this.userService.registerUser(user);
     const jwtPayload = await this.jwtService.signAsync({
+      id: newUser.id,
       email: newUser.email,
       name: newUser.name,
       surname: newUser.surname,

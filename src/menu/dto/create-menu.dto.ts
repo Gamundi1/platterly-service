@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsDate, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsDate, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateMenuDto {
   @IsString()
@@ -14,7 +14,7 @@ export class CreateMenuDto {
   availableTo: Date;
 
   @IsArray()
-  @IsString({ each: true })
+  @IsUUID('4', { each: true })
   @IsOptional()
   products?: string[];
 }

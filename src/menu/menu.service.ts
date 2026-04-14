@@ -114,6 +114,22 @@ export class MenuService {
     };
   }
 
+  async getAllProductsFromId(uuids: string[]) {
+    const products = await this.productRepository.find({
+      where: { id: In(uuids) },
+    });
+
+    if (!products) {
+      throw new BadRequestException('Provide a valid list of products');
+    }
+
+    if (products.length !== uuids.length) {
+      throw new BadRequestException('Some products are invalid');
+    }
+
+    return products;
+  }
+
   private handleDataBaseError(error) {
     if (error.code === DataBaseErrorCodes.DuplicatedKey) {
       throw new BadRequestException('Name is already in use');

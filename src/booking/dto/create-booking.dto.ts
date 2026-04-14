@@ -1,19 +1,6 @@
 import { Type } from 'class-transformer';
-import {
-  IsDateString,
-  IsEnum,
-  IsNumber,
-  IsString,
-  IsUUID,
-  Min,
-} from 'class-validator';
-
-enum BookingStatus {
-  CONFIRMED = 'confirmed',
-  CANCELLED = 'cancelled',
-  ACTIVE = 'active',
-  COMPLETED = 'completed',
-}
+import { IsDateString, IsEnum, IsNumber, IsUUID, Min } from 'class-validator';
+import { BookingStatus } from '../enum/booking-status.enum';
 
 export class CreateBookingDto {
   @IsNumber()
@@ -25,7 +12,7 @@ export class CreateBookingDto {
   date: string;
 
   @IsEnum(BookingStatus)
-  status: string;
+  status: BookingStatus;
 
   @IsUUID()
   availableHoursId: string;

@@ -83,4 +83,14 @@ export class BookingService {
 
     return bookings;
   }
+
+  async getBookingById(uuid: string) {
+    const booking = await this.bookingRepository.findOne({
+      where: { id: uuid },
+    });
+    if (!booking) {
+      throw new BadRequestException('Booking not found');
+    }
+    return booking;
+  }
 }

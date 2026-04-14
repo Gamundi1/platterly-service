@@ -46,6 +46,16 @@ export class UserService {
     return newUser!;
   }
 
+  async findUserById(uuid: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: uuid } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
+  }
+
   private handleDataBaseError(error) {
     if (error.code === DataBaseErrorCodes.DuplicatedKey) {
       throw new BadRequestException('email is already taken');
