@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   ParseUUIDPipe,
   Post,
@@ -28,5 +29,11 @@ export class OrderController {
       bookingId,
       request.user,
     );
+  }
+
+  @Get('get/:id')
+  @UseGuards(AuthGuard)
+  getOrderById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.orderService.getOrderById(id);
   }
 }

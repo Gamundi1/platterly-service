@@ -12,6 +12,7 @@ import { AvailableHours } from './availableHours/entities/available-hours.entity
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { Booking } from './entities/booking.entity';
 import { TableService } from 'src/table/table.service';
+import { User } from 'src/auth/user/entities/user.entity';
 
 @Injectable()
 export class BookingService {
@@ -26,7 +27,7 @@ export class BookingService {
     private readonly tableService: TableService,
   ) {}
 
-  async createBooking(createBookingDto: CreateBookingDto) {
+  async createBooking(createBookingDto: CreateBookingDto, user: User) {
     let availableHour: AvailableHours | null;
     let table: Table | null;
 
@@ -48,10 +49,15 @@ export class BookingService {
       ...createBookingDto,
       availableHours: availableHour,
       table: table,
+      user,
     });
     this.bookingRepository.save(booking);
 
-    return booking;
+    return {
+      date: booking.date,
+      guests: booking.guests,
+      tableNumber: table.number,
+    };
   }
 
   addAvailableHour(createAvailableHourDto: CreateAvailableHourDto) {

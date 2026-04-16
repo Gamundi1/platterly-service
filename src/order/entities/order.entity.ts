@@ -1,4 +1,5 @@
 import {
+  BeforeInsert,
   Column,
   Entity,
   JoinTable,
@@ -19,7 +20,7 @@ export class Order {
   @Column({
     type: 'timestamp',
   })
-  scheduledAt: number;
+  scheduledAt: Date;
 
   @Column({
     type: 'enum',
@@ -37,4 +38,11 @@ export class Order {
 
   @ManyToOne(() => User, (user) => user.orders)
   user: User;
+
+  @BeforeInsert()
+  setScheduledAt() {
+    if (!this.scheduledAt) {
+      this.scheduledAt = new Date();
+    }
+  }
 }

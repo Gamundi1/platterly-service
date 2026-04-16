@@ -1,13 +1,13 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   ParseUUIDPipe,
   Post,
-  UseGuards,
+  UseGuards
 } from '@nestjs/common';
+import { AuthGuard } from '@shared/guards/auth.guard';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { MenuService } from './menu.service';
 import { DishService } from './product/dish/dish.service';
@@ -15,7 +15,6 @@ import { CreateDishDto } from './product/dish/dto/create-dish.dto';
 import { CreateIngredientDto } from './product/dish/dto/create-ingredient.dto';
 import { DrinkService } from './product/drink/drink.service';
 import { CreateDrinkDto } from './product/drink/dto/create-drink.dto';
-import { AuthGuard } from '@shared/guards/auth.guard';
 
 @Controller('v1/menu')
 export class MenuController {

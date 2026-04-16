@@ -1,19 +1,16 @@
-import { IsArray, IsEnum, IsNumber, IsOptional, IsUUID } from 'class-validator';
-import { OrderStatus } from '../enum/order-status.enum';
 import { Type } from 'class-transformer';
+import { IsArray, IsDateString, IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { OrderStatus } from '../enum/order-status.enum';
 
 export class CreateOrderDto {
-  @IsNumber()
+  @IsDateString()
   @IsOptional()
-  @Type(() => Number)
-  scheduledAt: number;
+  @Type(() => String)
+  scheduledAt: string;
 
   @IsEnum(OrderStatus)
   @IsOptional()
   status: OrderStatus;
-
-  @IsUUID()
-  bookingId: string;
 
   @IsArray()
   @IsUUID('4', { each: true })

@@ -1,15 +1,29 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateAvailableHourDto } from './availableHours/dto/create-available-hour.dto';
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import type { AuthenticatedRequest } from '@shared/types/authenticated-request.type';
+import { AuthGuard } from '@shared/guards/auth.guard';
 
 @Controller('v1/booking')
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
   @Post()
-  create(@Body() createBookingDto: CreateBookingDto) {
-    return this.bookingService.createBooking(createBookingDto);
+  @UseGuards(AuthGuard)
+  create(
+    @Body() createBookingDto: CreateBookingDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.bookingService.createBooking(createBookingDto, request.user);
   }
 
   @Get('active/:date')

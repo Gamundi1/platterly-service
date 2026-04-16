@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { BookingService } from 'src/booking/booking.service';
 import { Repository } from 'typeorm';
@@ -21,19 +21,47 @@ export class OrderService {
     bookingId: string,
     user: User,
   ) {
+    if (createOrderDto.products.length === 0) {
+      throw new BadRequestException(
+        'At least one product must be included in the order.',
+      );
+    }
+
     const booking = await this.bookingService.getBookingById(bookingId);
     const products = await this.menuService.getAllProductsFromId(
       createOrderDto.products,
     );
 
-    const order = this.orderRepository.create({
-      ...createOrderDto,
-      scheduledAt: Date.now(),
-      booking,
-      products,
-      user,
-    });
+    try {
+      const order = this.orderRepository.create({
+        ...createOrderDto,
+        booking,
+        products,
+        user,
+      });
 
-    return this.orderRepository.save(order);
+      this.orderRepository.save(order);
+
+      return order.id;
+    } catch (error) {
+      throw new BadRequestException('Failed to create order: ' + error.message);
+    }
+  }
+
+  async getOrderById(id: string) {
+    try {
+      const order = await this.orderRepository.findOne({
+        where: { id },
+        relations: ['products'],
+      });
+      if (!order) {
+        throw new BadRequestException('Order not found.');
+      }
+      return order;
+    } catch (error) {
+      throw new BadRequestException(
+        'Failed to retrieve order: ' + error.message,
+      );
+    }
   }
 }
