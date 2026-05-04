@@ -10,6 +10,7 @@ import { Repository } from 'typeorm';
 import { CreateAvailableHourDto } from './availableHours/dto/create-available-hour.dto';
 import { AvailableHours } from './availableHours/entities/available-hours.entity';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { BookingGuest } from './entities/booking-guests.entity';
 import { Booking } from './entities/booking.entity';
 import { TableService } from 'src/table/table.service';
 import { User } from 'src/auth/user/entities/user.entity';
@@ -22,6 +23,9 @@ export class BookingService {
 
     @InjectRepository(AvailableHours)
     private readonly availableHoursRepository: Repository<AvailableHours>,
+
+    @InjectRepository(BookingGuest)
+    private readonly bookingGuestRepository: Repository<BookingGuest>,
 
     @Inject(forwardRef(() => TableService))
     private readonly tableService: TableService,
@@ -49,15 +53,50 @@ export class BookingService {
       ...createBookingDto,
       availableHours: availableHour,
       table: table,
-      user,
     });
-    this.bookingRepository.save(booking);
+    const savedBooking = await this.bookingRepository.save(booking);
+
+    const bookingGuest = await this.bookingGuestRepository.create({
+      booking: savedBooking,
+      user,
+      owner: true,
+    });
+
+    await this.bookingGuestRepository.save(bookingGuest);
 
     return {
-      date: booking.date,
-      guests: booking.guests,
+      id: savedBooking.id,
+      date: savedBooking.date,
+      guests: savedBooking.guests,
       tableNumber: table.number,
     };
+  }
+
+  async addUserToBooking(bookingId: string, user: User) {
+    const booking = await this.getBookingById(bookingId);
+    if (!booking) {
+      throw new BadRequestException('Booking not found');
+    }
+
+    const existingGuest = booking.bookingGuests.find(
+      (bookingGuest) => bookingGuest.user === user,
+    );
+
+    if (existingGuest) {
+      throw new BadRequestException('User is already part of the booking');
+    }
+
+    if (booking.bookingGuests.length >= booking.guests) {
+      throw new BadRequestException('Booking is already full');
+    }
+
+    const bookingGuest = await this.bookingGuestRepository.create({
+      booking,
+      user,
+      owner: false,
+    });
+
+    return this.bookingGuestRepository.save(bookingGuest);
   }
 
   addAvailableHour(createAvailableHourDto: CreateAvailableHourDto) {
@@ -93,6 +132,9 @@ export class BookingService {
   async getBookingById(uuid: string) {
     const booking = await this.bookingRepository.findOne({
       where: { id: uuid },
+      relations: {
+        bookingGuests: true,
+      },
     });
     if (!booking) {
       throw new BadRequestException('Booking not found');

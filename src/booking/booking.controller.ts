@@ -26,6 +26,20 @@ export class BookingController {
     return this.bookingService.createBooking(createBookingDto, request.user);
   }
 
+  @Post('join')
+  @UseGuards(AuthGuard)
+  addUserToBooking(
+    @Body('bookingId') bookingId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.bookingService.addUserToBooking(bookingId, request.user);
+  }
+
+  @Get('get/:bookingId')
+  getBooking(@Param('bookingId') bookingId: string) {
+    return this.bookingService.getBookingById(bookingId);
+  }
+
   @Get('active/:date')
   getBookingsByDate(@Param('date') date: string) {
     return this.bookingService.getBookingsByDate(date);

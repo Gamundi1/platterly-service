@@ -1,6 +1,8 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { UserRole } from '../enums/user-role.enum';
 import { Order } from 'src/order/entities/order.entity';
+import { Booking } from 'src/booking/entities/booking.entity';
+import { BookingGuest } from 'src/booking/entities/booking-guests.entity';
 
 @Entity()
 export class User {
@@ -32,6 +34,6 @@ export class User {
   @OneToMany(() => Order, (order) => order.user)
   orders: Order[];
 
-  @OneToMany(() => Order, (order) => order.user)
-  bookings: Order[];
+  @OneToMany(() => BookingGuest, (bookingGuest) => bookingGuest.user)
+  bookingGuests: BookingGuest[];
 }

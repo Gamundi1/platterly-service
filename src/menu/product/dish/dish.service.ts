@@ -69,6 +69,7 @@ export class DishService {
           icon: allergen.icon,
         });
       });
+      ingredient.allergens = [];
     });
 
     return {

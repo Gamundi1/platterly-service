@@ -9,7 +9,7 @@ import {
 import { AvailableHours } from '../availableHours/entities/available-hours.entity';
 import { Order } from 'src/order/entities/order.entity';
 import { BookingStatus } from '../enum/booking-status.enum';
-import { User } from 'src/auth/user/entities/user.entity';
+import { BookingGuest } from './booking-guests.entity';
 
 @Entity()
 export class Booking {
@@ -40,6 +40,6 @@ export class Booking {
   @OneToMany(() => Order, (order) => order.booking)
   orders: Order[];
 
-  @ManyToOne(() => User, (user) => user.bookings)
-  user: User;
+  @OneToMany(() => BookingGuest, (bookingGuest) => bookingGuest.booking)
+  bookingGuests: BookingGuest[];
 }
