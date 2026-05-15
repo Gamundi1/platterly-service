@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Put,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -12,6 +13,7 @@ import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import type { AuthenticatedRequest } from '@shared/types/authenticated-request.type';
 import { AuthGuard } from '@shared/guards/auth.guard';
+import { BookingStatus } from './enum/booking-status.enum';
 
 @Controller('v1/booking')
 export class BookingController {
@@ -35,6 +37,12 @@ export class BookingController {
     return this.bookingService.addUserToBooking(bookingId, request.user);
   }
 
+  @Get('my-bookings')
+  @UseGuards(AuthGuard)
+  getUserBookings(@Req() request: AuthenticatedRequest) {
+    return this.bookingService.getUserBookings(request.user);
+  }
+
   @Get('get/:bookingId')
   getBooking(@Param('bookingId') bookingId: string) {
     return this.bookingService.getBookingById(bookingId);
@@ -53,5 +61,13 @@ export class BookingController {
   @Get('available-hours')
   getAvailableHours() {
     return this.bookingService.getAvailableHours();
+  }
+
+  @Put('status/:bookingId')
+  updateBookingStatus(
+    @Param('bookingId') bookingId: string,
+    @Body('status') status: BookingStatus,
+  ) {
+    return this.bookingService.updateBookingAndTableStatus(bookingId, status);
   }
 }

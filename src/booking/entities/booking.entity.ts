@@ -29,7 +29,7 @@ export class Booking {
     enum: BookingStatus,
     default: BookingStatus.CONFIRMED,
   })
-  status: string;
+  status: BookingStatus;
 
   @ManyToOne(() => AvailableHours, (availableHours) => availableHours.bookings)
   availableHours: AvailableHours;

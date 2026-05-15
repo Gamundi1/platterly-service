@@ -1,5 +1,6 @@
 import { Booking } from 'src/booking/entities/booking.entity';
 import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
+import { TableStatus } from '../enum/table-status.enum';
 
 @Entity()
 export class Table {
@@ -12,6 +13,13 @@ export class Table {
     type: 'int',
   })
   capacity: number;
+
+  @Column({
+    default: TableStatus.FREE,
+    type: 'enum',
+    enum: TableStatus,
+  })
+  status: TableStatus;
 
   @Column({
     type: 'int',

@@ -5,11 +5,12 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { CreateTableDto } from './dto/create-table.dto';
 import { Table } from './entities/table.entity';
 import { Booking } from 'src/booking/entities/booking.entity';
 import { BookingService } from 'src/booking/booking.service';
+import { TableStatus } from './enum/table-status.enum';
 
 @Injectable()
 export class TableService {
@@ -71,12 +72,42 @@ export class TableService {
     return availableTables;
   }
 
+  async updateTableStatus(
+    tableNumber: number,
+    status: TableStatus,
+    manager?: EntityManager,
+  ) {
+    const tableRepository = manager
+      ? manager.getRepository(Table)
+      : this.tableRepository;
+
+    const table = await tableRepository.findOne({
+      where: { number: tableNumber },
+    });
+    if (!table) {
+      throw new BadRequestException('Table not found');
+    }
+    if (table.status === status) {
+      throw new BadRequestException('Table already has the specified status');
+    }
+
+    if (
+      table.status === TableStatus.OCCUPIED &&
+      status === TableStatus.OCCUPIED
+    ) {
+      throw new BadRequestException('Table is already occupied');
+    }
+    
+    table.status = status;
+    return tableRepository.save(table);
+  }
+
   private async mapBookingsToTableNumbers(date: string) {
     const bookings = await this.bookingService.getBookingsByDate(date);
     return bookings.map((booking) => {
       return {
-        hour: booking.availablehoursid,
-        tableNumber: booking.tablenumber,
+        hour: booking.hour.id,
+        tableNumber: booking.table.number,
       };
     });
   }

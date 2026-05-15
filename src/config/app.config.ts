@@ -7,4 +7,5 @@ export const EnvConfiguration = () => ({
   dbUsername: process.env.DB_USERNAME || 'postgres',
   dbPassword: process.env.DB_PASSWORD || 'password',
   jwtSecret: process.env.JWT_SECRET,
+  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
 });
