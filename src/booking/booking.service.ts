@@ -277,7 +277,7 @@ export class BookingService {
         return TableStatus.OCCUPIED;
       case BookingStatus.CANCELLED:
       case BookingStatus.COMPLETED:
-        return TableStatus.FREE;
+        return TableStatus.NEEDS_CLEANING;
       default:
         throw new BadRequestException('Invalid booking status');
     }

@@ -23,7 +23,7 @@ export class CreateDrinkDto extends CreateProductDto {
   isAlcoholic: boolean;
 
   @IsArray()
-  @IsUUID('4', { each: true })
+  @IsString({ each: true })
   @IsOptional()
   allergens?: string[];
 }
