@@ -10,6 +10,7 @@ import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { DataBaseErrorCodes } from '@shared/interfaces/data-base-error-codes.interface';
 import { GetUserDto } from './dto/get-user.dto';
+import { UserRole } from './enums/user-role.enum';
 
 @Injectable()
 export class UserService {
@@ -23,11 +24,11 @@ export class UserService {
 
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException({ code: 'USER_NOT_FOUND' });
     }
 
     if (user.password !== password) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException({ code: 'INVALID_CREDENTIALS' });
     }
 
     return user;
@@ -50,15 +51,25 @@ export class UserService {
     const user = await this.userRepository.findOne({ where: { id: uuid } });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException({ code: 'USER_NOT_FOUND' });
     }
 
     return user;
   }
 
+  async findUserByRole(role: UserRole): Promise<User[]> {
+    const users = await this.userRepository.find({ where: { role } });
+
+    if (!users || users.length === 0) {
+      throw new NotFoundException({ code: 'USERS_NOT_FOUND' });
+    }
+
+    return users;
+  }
+
   private handleDataBaseError(error) {
     if (error.code === DataBaseErrorCodes.DuplicatedKey) {
-      throw new BadRequestException('email is already taken');
+      throw new BadRequestException({ code: 'EMAIL_ALREADY_TAKEN' });
     }
   }
 }

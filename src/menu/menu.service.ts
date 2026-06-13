@@ -78,8 +78,10 @@ export class MenuService {
 
     menu.products.map((product) => {
       if (product instanceof Dish) {
+        let ingredients = new Set();
         let allergens = new Set();
         product.ingredients.forEach((ingredient) => {
+          ingredients.add(ingredient.name);
           ingredient.allergens.forEach((allergen) => {
             allergens.add({
               name: allergen.name,
@@ -91,10 +93,11 @@ export class MenuService {
         dishes.push({
           id: product.id,
           name: product.name,
-          price: product.priceUnits,
+          price: product.price,
           priceUnits: product.priceUnits,
           cookTime: product.cookTime,
           images: product.images,
+          ingredients: Array.from(ingredients),
           allergens: Array.from(allergens),
         });
       }

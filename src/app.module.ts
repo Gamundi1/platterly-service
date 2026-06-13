@@ -8,6 +8,8 @@ import { TableModule } from './table/table.module';
 import { BookingModule } from './booking/booking.module';
 import { AuthModule } from './auth/auth.module';
 import { OrderModule } from './order/order.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { OrderModule } from './order/order.module';
       autoLoadEntities: true,
       synchronize: true,
     }),
+    EventEmitterModule.forRoot(),
+    NotificationsModule,
     TableModule,
     MenuModule,
     BookingModule,

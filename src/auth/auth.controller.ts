@@ -34,6 +34,15 @@ export class AuthController {
     };
   }
 
+  @Post('log-out')
+  async logOut(@Res({ passthrough: true }) response) {
+    response.clearCookie('refresh-token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+    });
+  }
+
   @Get('user')
   @UseGuards(AuthGuard)
   getUser(@Req() request: AuthenticatedRequest) {
@@ -46,11 +55,9 @@ export class AuthController {
   }
 
   @Post('refresh')
-  async refresh(
-    @Body() body: RefreshTokenDto,
-    @Res({ passthrough: true }) response,
-  ) {
-    const refreshToken = body.refreshToken;
+  async refresh(@Req() request, @Res({ passthrough: true }) response) {
+    const refreshToken = request.cookies['refresh-token'];
+
     const tokens = await this.authService.refreshTokens(refreshToken);
 
     response.cookie('refresh-token', tokens['refresh-token'], {

@@ -87,17 +87,14 @@ export class TableService {
     if (!table) {
       throw new BadRequestException('Table not found');
     }
-    if (table.status === status) {
-      throw new BadRequestException('Table already has the specified status');
-    }
 
     if (
       table.status === TableStatus.OCCUPIED &&
       status === TableStatus.OCCUPIED
     ) {
-      throw new BadRequestException('Table is already occupied');
+      throw new BadRequestException({ error: 'TABLE_ALREADY_OCCUPIED_ERROR' });
     }
-    
+
     table.status = status;
     return tableRepository.save(table);
   }

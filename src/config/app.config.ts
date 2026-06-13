@@ -8,4 +8,6 @@ export const EnvConfiguration = () => ({
   dbPassword: process.env.DB_PASSWORD || 'password',
   jwtSecret: process.env.JWT_SECRET,
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
+  vapidPrivateKey: process.env.VAPID_PRIVATE_KEY,
+  vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
 });

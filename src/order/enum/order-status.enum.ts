@@ -1,5 +1,6 @@
 export enum OrderStatus {
   SCHEDULED = 'SCHEDULED',
   IN_PROGRESS = 'IN_PROGRESS',
+  READY = 'READY',
   DELIVERED = 'DELIVERED',
 }

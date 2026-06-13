@@ -9,6 +9,7 @@ import { UserRole } from '../enums/user-role.enum';
 import { Order } from 'src/order/entities/order.entity';
 import { Booking } from 'src/booking/entities/booking.entity';
 import { BookingGuest } from 'src/booking/entities/booking-guests.entity';
+import { NotificationEntity } from 'src/notifications/entities/notifications.entity';
 
 @Entity()
 export class User {
@@ -42,4 +43,7 @@ export class User {
 
   @OneToMany(() => BookingGuest, (bookingGuest) => bookingGuest.user)
   bookingGuests: BookingGuest[];
+
+  @OneToMany(() => NotificationEntity, (notification) => notification.user)
+  notifications: NotificationEntity[];
 }

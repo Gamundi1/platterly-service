@@ -2,15 +2,14 @@ import {
   BeforeInsert,
   Column,
   Entity,
-  JoinTable,
-  ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { OrderStatus } from '../enum/order-status.enum';
 import { Booking } from 'src/booking/entities/booking.entity';
-import { Product } from 'src/menu/product/entities/product.entity';
 import { User } from 'src/auth/user/entities/user.entity';
+import { OrderProduct } from './order-product.entity';
 
 @Entity()
 export class Order {
@@ -23,6 +22,12 @@ export class Order {
   scheduledAt: Date;
 
   @Column({
+    type: 'timestamp',
+    nullable: true,
+  })
+  deliveredAt: Date;
+
+  @Column({
     type: 'enum',
     enum: OrderStatus,
     default: OrderStatus.SCHEDULED,
@@ -32,9 +37,10 @@ export class Order {
   @ManyToOne(() => Booking, (booking) => booking.orders)
   booking: Booking;
 
-  @ManyToMany(() => Product)
-  @JoinTable()
-  products: Product[];
+  @OneToMany(() => OrderProduct, (orderProduct) => orderProduct.order, {
+    cascade: true,
+  })
+  orderProducts: OrderProduct[];
 
   @ManyToOne(() => User, (user) => user.orders)
   user: User;
