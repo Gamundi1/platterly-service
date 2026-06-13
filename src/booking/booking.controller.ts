@@ -44,11 +44,16 @@ export class BookingController {
   }
 
   @Get('get/:bookingId')
-  getBooking(@Param('bookingId') bookingId: string) {
-    return this.bookingService.getBookingById(bookingId);
+  @UseGuards(AuthGuard)
+  getBooking(
+    @Param('bookingId') bookingId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.bookingService.getBookingById(bookingId, request.user);
   }
 
   @Get('active/:date')
+  @UseGuards(AuthGuard)
   getBookingsByDate(@Param('date') date: string) {
     return this.bookingService.getBookingsByDate(date);
   }

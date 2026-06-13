@@ -16,7 +16,7 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 import { BookingGuest } from './entities/booking-guests.entity';
 import { Booking } from './entities/booking.entity';
 import { BookingStatus } from './enum/booking-status.enum';
-import { BookingInterface } from './interfaces/booking.interface';
+import { GetBookingDto } from './dto/get-booking.dto';
 
 @Injectable()
 export class BookingService {
@@ -39,7 +39,7 @@ export class BookingService {
   async createBooking(
     createBookingDto: CreateBookingDto,
     user: User,
-  ): Promise<BookingInterface> {
+  ): Promise<GetBookingDto> {
     let availableHour: AvailableHours | null;
     let table: Table | null;
 
@@ -48,13 +48,13 @@ export class BookingService {
     });
 
     if (!availableHour) {
-      throw new BadRequestException('Invalid hour interval');
+      throw new BadRequestException({ code: 'INVALID_HOUR_INTERVAL' });
     }
 
     table = await this.tableService.findOne(createBookingDto.tableNumber);
 
     if (!table) {
-      throw new BadRequestException('Invalid table number');
+      throw new BadRequestException({ code: 'INVALID_TABLE_NUMBER' });
     }
 
     const booking = this.bookingRepository.create({
@@ -120,7 +120,7 @@ export class BookingService {
     });
   }
 
-  async getUserBookings(user: User): Promise<BookingInterface[]> {
+  async getUserBookings(user: User): Promise<GetBookingDto[]> {
     const userBookings = await this.bookingRepository
       .createQueryBuilder('booking')
       .innerJoin('booking.bookingGuests', 'filterGuests')
@@ -151,12 +151,7 @@ export class BookingService {
   }
 
   async addUserToBooking(bookingId: string, user: User) {
-    const booking = await this.getBookingById(bookingId);
-    if (!booking) {
-      throw new BadRequestException({
-        code: 'BOOKING_NOT_FOUND',
-      });
-    }
+    const booking = await this.getBookingById(bookingId, user, true);
 
     if (booking.users.length >= booking.guests) {
       throw new BadRequestException({
@@ -171,6 +166,12 @@ export class BookingService {
     if (existingGuest) {
       throw new BadRequestException({
         code: 'USER_ALREADY_IN_BOOKING',
+      });
+    }
+
+    if (booking.status !== BookingStatus.CONFIRMED && booking.status !== BookingStatus.ACTIVE) {
+      throw new BadRequestException({
+        code: 'BOOKING_NOT_ACTIVE',
       });
     }
 
@@ -194,7 +195,7 @@ export class BookingService {
     return this.availableHoursRepository.find();
   }
 
-  async getBookingsByDate(date: string): Promise<BookingInterface[]> {
+  async getBookingsByDate(date: string): Promise<GetBookingDto[]> {
     const bookings = await this.bookingRepository
       .createQueryBuilder('booking')
       .leftJoin('booking.table', 'table')
@@ -238,7 +239,11 @@ export class BookingService {
     }));
   }
 
-  async getBookingById(uuid: string): Promise<BookingInterface> {
+  async getBookingById(
+    uuid: string,
+    user: User,
+    tryingToJoin: boolean = false,
+  ): Promise<GetBookingDto> {
     const booking = await this.bookingRepository.findOne({
       where: { id: uuid },
       relations: {
@@ -248,7 +253,14 @@ export class BookingService {
       },
     });
     if (!booking) {
-      throw new BadRequestException('Booking not found');
+      throw new BadRequestException({ code: 'BOOKING_NOT_FOUND' });
+    }
+
+    if (
+      !tryingToJoin &&
+      !booking.bookingGuests.some((guest) => guest.user.id === user.id)
+    ) {
+      throw new BadRequestException({ code: 'USER_NOT_IN_BOOKING' });
     }
 
     return {
@@ -279,7 +291,7 @@ export class BookingService {
       case BookingStatus.COMPLETED:
         return TableStatus.NEEDS_CLEANING;
       default:
-        throw new BadRequestException('Invalid booking status');
+        throw new BadRequestException({ code: 'INVALID_BOOKING_STATUS' });
     }
   }
 }
