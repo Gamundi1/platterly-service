@@ -9,7 +9,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   app.enableCors({
-    origin: 'http://localhost:4200',
+    origin: 'https://platterly.netlify.app/',
     credentials: true,
   });
 
