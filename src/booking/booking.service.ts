@@ -169,7 +169,10 @@ export class BookingService {
       });
     }
 
-    if (booking.status !== BookingStatus.CONFIRMED && booking.status !== BookingStatus.ACTIVE) {
+    if (
+      booking.status !== BookingStatus.CONFIRMED &&
+      booking.status !== BookingStatus.ACTIVE
+    ) {
       throw new BadRequestException({
         code: 'BOOKING_NOT_ACTIVE',
       });
@@ -216,6 +219,9 @@ export class BookingService {
         'ARRAY_AGG(guestUser.surname) FILTER (WHERE bookingGuests.owner = true) AS ownerSurnames',
       ])
       .where('booking.date = :date', { date })
+      .andWhere('booking.status != :status', {
+        status: BookingStatus.CANCELLED,
+      })
       .groupBy('booking.id')
       .addGroupBy('availableHours.interval')
       .addGroupBy('availableHours.id')

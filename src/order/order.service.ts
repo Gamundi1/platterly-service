@@ -70,6 +70,9 @@ export class OrderService {
         id: order.id,
         status: order.orderStatus,
         scheduledAt: order.scheduledAt,
+        booking: {
+          table: booking.table.number,
+        },
         user: {
           name: order.user.name,
           surname: order.user.surname,
@@ -92,17 +95,7 @@ export class OrderService {
   async getOrdersByBookingId(
     bookingId: string,
   ): Promise<GetBookingOrdersDto[]> {
-    let orders: Order[] | null;
-    try {
-      orders = await this.orderRepository.find({
-        where: { booking: { id: bookingId } },
-        relations: ['orderProducts', 'orderProducts.product', 'user'],
-      });
-    } catch (error) {
-      throw new BadRequestException({
-        code: 'FAILED_TO_RETRIEVE_ORDERS',
-      });
-    }
+    const orders: Order[] = await this.retrieveBookingOrders(bookingId);
     return orders.map((order) => {
       return {
         id: order.id,
@@ -120,6 +113,44 @@ export class OrderService {
         })),
       };
     });
+  }
+
+  async getTotalOrdersPriceByBookingId(bookingId: string): Promise<any> {
+    let orders: Order[] = await this.retrieveBookingOrders(bookingId);
+    let totalPrice = 0;
+
+    orders.forEach((order) => {
+      if (order.isPaid) {
+        return;
+      }
+      order.orderProducts.forEach((product) => {
+        totalPrice += product.product.price * product.quantity;
+      });
+    });
+    return { totalPrice };
+  }
+
+  async getTotalOrdersPriceByBookingIdAndUser(
+    bookingId: string,
+    user: User,
+  ): Promise<any> {
+    let orders: Order[] = await this.retrieveBookingOrders(bookingId);
+    let totalPrice = 0;
+
+    orders.forEach((order) => {
+      if (order.isPaid) {
+        return;
+      }
+
+      if (order.user.id !== user.id) {
+        return;
+      }
+
+      order.orderProducts.forEach((product) => {
+        totalPrice += product.product.price * product.quantity;
+      });
+    });
+    return { totalPrice };
   }
 
   async getOrderById(id: string): Promise<GetBookingOrdersDto> {
@@ -228,19 +259,31 @@ export class OrderService {
         surname: order.user.surname,
       },
       deliveredAt: order.deliveredAt,
-      products: [],
+      products: order.orderProducts?.map((orderProduct) => ({
+        name: orderProduct.product.name,
+        price: orderProduct.product.price,
+        quantity: orderProduct.quantity,
+      })),
     };
 
     try {
       await this.orderRepository.save(order);
-      this.eventEmitter.emit(
-        'order.updated',
-        orderToEmit,
-        order.booking.id,
-        status,
-      );
+      this.eventEmitter.emit('order.updated', orderToEmit, order.booking.id);
     } catch (error) {
       throw new BadRequestException({ code: 'FAILED_TO_UPDATE_ORDER_STATUS' });
+    }
+  }
+
+  private async retrieveBookingOrders(bookingId: string): Promise<Order[]> {
+    try {
+      return this.orderRepository.find({
+        where: { booking: { id: bookingId } },
+        relations: ['orderProducts', 'orderProducts.product', 'user'],
+      });
+    } catch (error) {
+      throw new BadRequestException({
+        code: 'FAILED_TO_RETRIEVE_ORDERS',
+      });
     }
   }
 }

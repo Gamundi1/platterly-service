@@ -38,6 +38,26 @@ export class OrderController {
     return this.orderService.getOrdersByBookingId(bookingId);
   }
 
+  @Get('total-price/:bookingId')
+  @UseGuards(AuthGuard)
+  getTotalOrdersPriceByBookingId(
+    @Param('bookingId', ParseUUIDPipe) bookingId: string,
+  ) {
+    return this.orderService.getTotalOrdersPriceByBookingId(bookingId);
+  }
+
+  @Get('retrieve/:bookingId')
+  @UseGuards(AuthGuard)
+  getUserOrdersTotalPrice(
+    @Param('bookingId', ParseUUIDPipe) bookingId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.orderService.getTotalOrdersPriceByBookingIdAndUser(
+      bookingId,
+      request.user,
+    );
+  }
+
   @Post('update-status')
   @UseGuards(AuthGuard)
   updateOrderStatus(
