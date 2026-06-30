@@ -1,5 +1,6 @@
 import {
   BeforeInsert,
+  BeforeUpdate,
   Column,
   Entity,
   ManyToOne,
@@ -34,6 +35,12 @@ export class Order {
   })
   orderStatus: OrderStatus;
 
+  @Column({
+    type: 'boolean',
+    default: false,
+  })
+  isPaid: boolean;
+
   @ManyToOne(() => Booking, (booking) => booking.orders)
   booking: Booking;
 
@@ -49,6 +56,13 @@ export class Order {
   setScheduledAt() {
     if (!this.scheduledAt) {
       this.scheduledAt = new Date();
+    }
+  }
+
+  @BeforeUpdate()
+  setDeliveredAt() {
+    if (this.orderStatus === OrderStatus.DELIVERED && !this.deliveredAt) {
+      this.deliveredAt = new Date();
     }
   }
 }

@@ -7,7 +7,6 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { GetBookingOrdersDto } from 'src/order/dto/get-booking-orders.dto';
-import { OrderStatus } from 'src/order/enum/order-status.enum';
 
 @WebSocketGateway()
 export class NotificationsGateway {
@@ -41,12 +40,8 @@ export class NotificationsGateway {
     this.emitToBookingUsers(bookingId, order, 'order.created');
   }
 
-  emitOrderUpdated(
-    bookingId: string,
-    order: GetBookingOrdersDto,
-    status: OrderStatus,
-  ) {
-    this.server.to('ordersUpdated').emit('order.updated', order, status);
-    this.emitToBookingUsers(bookingId, { order, status }, 'order.updated');
+  emitOrderUpdated(bookingId: string, order: GetBookingOrdersDto) {
+    this.server.to('ordersUpdated').emit('order.updated', order);
+    this.emitToBookingUsers(bookingId, order, 'order.updated');
   }
 }
