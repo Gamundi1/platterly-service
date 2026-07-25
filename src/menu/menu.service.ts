@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataBaseErrorCodes } from '@shared/interfaces/data-base-error-codes.interface';
 import { In, Repository } from 'typeorm';
@@ -7,6 +11,8 @@ import { Menu } from './entities/menu.entity';
 import { Product } from './product/entities/product.entity';
 import { Dish } from './product/dish/entities/dish.entity';
 import { Drink } from './product/drink/entities/drink.entity';
+import { User } from 'src/auth/user/entities/user.entity';
+import { UserRole } from 'src/auth/user/enums/user-role.enum';
 
 @Injectable()
 export class MenuService {
@@ -41,6 +47,14 @@ export class MenuService {
     } catch (error) {
       this.handleDataBaseError(error);
     }
+  }
+
+  async findAllMenus(user: User): Promise<Menu[]> {
+    if (user.role !== UserRole.ADMIN) {
+      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+    }
+
+    return this.menuRepository.find();
   }
 
   async findAllAvailableMenus() {

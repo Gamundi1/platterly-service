@@ -30,6 +30,7 @@ export class Booking {
     default: BookingStatus.CONFIRMED,
   })
   status: BookingStatus;
+  
 
   @ManyToOne(() => AvailableHours, (availableHours) => availableHours.bookings)
   availableHours: AvailableHours;

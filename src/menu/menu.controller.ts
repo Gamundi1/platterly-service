@@ -5,7 +5,8 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
-  UseGuards
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@shared/guards/auth.guard';
 import { CreateMenuDto } from './dto/create-menu.dto';
@@ -15,6 +16,7 @@ import { CreateDishDto } from './product/dish/dto/create-dish.dto';
 import { CreateIngredientDto } from './product/dish/dto/create-ingredient.dto';
 import { DrinkService } from './product/drink/drink.service';
 import { CreateDrinkDto } from './product/drink/dto/create-drink.dto';
+import type { AuthenticatedRequest } from '@shared/types/authenticated-request.type';
 
 @Controller('v1/menu')
 export class MenuController {
@@ -28,6 +30,12 @@ export class MenuController {
   @Post()
   createNewMenu(@Body() createMenuDto: CreateMenuDto) {
     return this.menuService.createMenu(createMenuDto);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/all')
+  findAllMenus(@Req() request: AuthenticatedRequest) {
+    return this.menuService.findAllMenus(request.user);
   }
 
   @Get('available')

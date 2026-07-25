@@ -69,7 +69,7 @@ export class UserService {
 
   private handleDataBaseError(error) {
     if (error.code === DataBaseErrorCodes.DuplicatedKey) {
-      throw new BadRequestException({ code: 'EMAIL_ALREADY_TAKEN' });
+      throw new BadRequestException({ code: 'ERROR_CREATING_NEW_USER' });
     }
   }
 }

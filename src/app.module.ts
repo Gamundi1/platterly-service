@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { OrderModule } from './order/order.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { NotificationsModule } from './notifications/notifications.module';
+import { I18nModule } from './i18n/i18n.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     BookingModule,
     AuthModule,
     OrderModule,
+    I18nModule,
   ],
   controllers: [],
   providers: [],
