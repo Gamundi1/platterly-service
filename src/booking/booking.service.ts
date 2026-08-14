@@ -3,6 +3,8 @@ import {
   forwardRef,
   Inject,
   Injectable,
+  NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/auth/user/entities/user.entity';
@@ -17,6 +19,7 @@ import { BookingGuest } from './entities/booking-guests.entity';
 import { Booking } from './entities/booking.entity';
 import { BookingStatus } from './enum/booking-status.enum';
 import { GetBookingDto } from './dto/get-booking.dto';
+import { UserRole } from 'src/auth/user/enums/user-role.enum';
 
 @Injectable()
 export class BookingService {
@@ -94,20 +97,16 @@ export class BookingService {
   async updateBookingAndTableStatus(
     bookingId: string,
     bookingStatus: BookingStatus,
+    user: User,
   ) {
     await this.dataSource.transaction(async (manager) => {
       const bookingRepository = manager.getRepository(Booking);
 
-      const booking = await bookingRepository.findOne({
-        where: { id: bookingId },
-        relations: { table: true },
-      });
-
-      if (!booking) {
-        throw new BadRequestException({
-          code: 'BOOKING_NOT_FOUND',
-        });
+      if (user.role !== UserRole.HOST && (user.role === UserRole.USER && bookingStatus !== BookingStatus.CANCELLED)) {
+        throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
       }
+
+      const booking = await this.getBookingById(bookingId, user, user.role === UserRole.HOST);
 
       booking.status = bookingStatus;
       await this.tableService.updateTableStatus(
@@ -248,7 +247,7 @@ export class BookingService {
   async getBookingById(
     uuid: string,
     user: User,
-    tryingToJoin: boolean = false,
+    avoidVerification: boolean = false,
   ): Promise<GetBookingDto> {
     const booking = await this.bookingRepository.findOne({
       where: { id: uuid },
@@ -259,14 +258,14 @@ export class BookingService {
       },
     });
     if (!booking) {
-      throw new BadRequestException({ code: 'BOOKING_NOT_FOUND' });
+      throw new NotFoundException({ code: 'BOOKING_NOT_FOUND' });
     }
 
     if (
-      !tryingToJoin &&
+      !avoidVerification &&
       !booking.bookingGuests.some((guest) => guest.user.id === user.id)
     ) {
-      throw new BadRequestException({ code: 'USER_NOT_IN_BOOKING' });
+      throw new UnauthorizedException({ code: 'USER_NOT_IN_BOOKING' });
     }
 
     return {

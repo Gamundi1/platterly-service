@@ -19,7 +19,7 @@ export class AuthGuard implements CanActivate {
     const token = this.extractTokenFromHeader(request);
 
     if (!token) {
-      throw new UnauthorizedException('Provide a valid user token');
+      throw new UnauthorizedException({ code: 'TOKEN_NOT_PROVIDED' });
     }
 
     try {
@@ -28,15 +28,13 @@ export class AuthGuard implements CanActivate {
       const user = await this.userService.findUserById(payload.id);
 
       if (!user) {
-        throw new UnauthorizedException('User not found');
+        throw new UnauthorizedException({ code: 'USER_NOT_FOUND' });
       }
 
       request.user = user;
       return true;
     } catch (error) {
-      throw new UnauthorizedException(
-        'The provided token is invalid or expired',
-      );
+      throw new UnauthorizedException({ code: 'INVALID_TOKEN' });
     }
   }
 

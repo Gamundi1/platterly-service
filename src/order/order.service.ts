@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/auth/user/entities/user.entity';
@@ -26,17 +26,17 @@ export class OrderService {
     user: User,
   ) {
     if (createOrderDto.products.length === 0) {
-      throw new BadRequestException({ code: 'NO_PRODUCTS_PROVIDED' });
+      throw new BadRequestException({ code: 'NO_PRODUCTS_IN_ORDER' });
     }
 
     const booking = await this.bookingService.getBookingById(bookingId, user);
 
     if (!booking) {
-      throw new BadRequestException({ code: 'BOOKING_NOT_FOUND' });
+      throw new NotFoundException({ code: 'BOOKING_NOT_FOUND' });
     }
 
     if (booking.status !== 'active') {
-      throw new BadRequestException({ code: 'BOOKING_NOT_ACTIVE' });
+      throw new UnauthorizedException({ code: 'BOOKING_NOT_ACTIVE' });
     }
 
     const productIds = createOrderDto.products.map((item) => item.productId);
@@ -47,7 +47,7 @@ export class OrderService {
     const orderProducts = createOrderDto.products.map((item) => {
       const product = productsById.get(item.productId);
       if (!product) {
-        throw new BadRequestException({ code: 'INVALID_PRODUCTS_ID' });
+        throw new BadRequestException({ code: 'SOME_PRODUCTS_ARE_INVALID' });
       }
       return {
         product,
@@ -127,6 +127,10 @@ export class OrderService {
         totalPrice += product.product.price * product.quantity;
       });
     });
+
+    if (!totalPrice) {
+      throw new BadRequestException({ code: 'NO_UNPAID_ORDERS_LEFT' });
+    }
     return { totalPrice };
   }
 
@@ -150,35 +154,12 @@ export class OrderService {
         totalPrice += product.product.price * product.quantity;
       });
     });
-    return { totalPrice };
-  }
 
-  async getOrderById(id: string): Promise<GetBookingOrdersDto> {
-    try {
-      const order = await this.orderRepository.findOne({
-        where: { id },
-        relations: ['orderProducts', 'orderProducts.product'],
-      });
-      if (!order) {
-        throw new BadRequestException({ code: 'ORDER_NOT_FOUND' });
-      }
-      return {
-        id: order.id,
-        status: order.orderStatus,
-        scheduledAt: order.scheduledAt,
-        user: {
-          name: order.user.name,
-          surname: order.user.surname,
-        },
-        products: order.orderProducts.map((orderProduct) => ({
-          name: orderProduct.product.name,
-          price: orderProduct.product.price,
-          quantity: orderProduct.quantity,
-        })),
-      };
-    } catch (error) {
-      throw new BadRequestException({ code: 'FAILED_TO_RETRIEVE_ORDER' });
+    if (!totalPrice) {
+      throw new BadRequestException({ code: 'NO_UNPAID_ORDERS_LEFT' });
     }
+
+    return { totalPrice };
   }
 
   async getOrdersByDate(date: string): Promise<GetBookingOrdersDto[]> {
@@ -237,7 +218,7 @@ export class OrderService {
     });
 
     if (!order) {
-      throw new BadRequestException({ code: 'ORDER_NOT_FOUND' });
+      throw new NotFoundException({ code: 'ORDER_NOT_FOUND' });
     }
 
     if (order.orderStatus === status) {

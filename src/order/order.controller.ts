@@ -5,7 +5,9 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
   Req,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@shared/guards/auth.guard';
@@ -13,13 +15,14 @@ import type { AuthenticatedRequest } from '@shared/types/authenticated-request.t
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderService } from './order.service';
 import { OrderStatus } from './enum/order-status.enum';
+import { UserRole } from 'src/auth/user/enums/user-role.enum';
 
 @Controller('v1/order')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
-  @Post('create/:bookingId')
   @UseGuards(AuthGuard)
+  @Post('create/:bookingId')
   createOrder(
     @Body() createOrderDto: CreateOrderDto,
     @Param('bookingId', ParseUUIDPipe) bookingId: string,
@@ -32,22 +35,22 @@ export class OrderController {
     );
   }
 
-  @Get('booking/:bookingId')
   @UseGuards(AuthGuard)
+  @Get('booking/:bookingId')
   getOrdersByBookingId(@Param('bookingId', ParseUUIDPipe) bookingId: string) {
     return this.orderService.getOrdersByBookingId(bookingId);
   }
 
-  @Get('total-price/:bookingId')
   @UseGuards(AuthGuard)
+  @Get('total-price/:bookingId')
   getTotalOrdersPriceByBookingId(
     @Param('bookingId', ParseUUIDPipe) bookingId: string,
   ) {
     return this.orderService.getTotalOrdersPriceByBookingId(bookingId);
   }
 
-  @Get('retrieve/:bookingId')
   @UseGuards(AuthGuard)
+  @Get('retrieve/:bookingId')
   getUserOrdersTotalPrice(
     @Param('bookingId', ParseUUIDPipe) bookingId: string,
     @Req() request: AuthenticatedRequest,
@@ -58,24 +61,27 @@ export class OrderController {
     );
   }
 
-  @Post('update-status')
   @UseGuards(AuthGuard)
+  @Put('update-status')
   updateOrderStatus(
     @Body('orderId', ParseUUIDPipe) orderId: string,
     @Body('status') status: OrderStatus,
+    @Req() request: AuthenticatedRequest
   ) {
+
+    if (request.user.role === UserRole.USER) {
+      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+    }
+
     return this.orderService.updateOrderStatus(orderId, status);
   }
 
-  @Get('get/:id')
   @UseGuards(AuthGuard)
-  getOrderById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.orderService.getOrderById(id);
-  }
-
   @Get('date/:date')
-  @UseGuards(AuthGuard)
-  getOrdersByDate(@Param('date') date: string) {
+  getOrdersByDate(@Param('date') date: string, @Req() request: AuthenticatedRequest) {
+    if (request.user.role !== UserRole.HOST) {
+      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+    }
     return this.orderService.getOrdersByDate(date);
   }
 }

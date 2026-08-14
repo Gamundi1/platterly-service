@@ -1,18 +1,16 @@
 import {
   BadRequestException,
   Injectable,
-  UnauthorizedException,
+  NotFoundException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataBaseErrorCodes } from '@shared/interfaces/data-base-error-codes.interface';
 import { In, Repository } from 'typeorm';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { Menu } from './entities/menu.entity';
-import { Product } from './product/entities/product.entity';
 import { Dish } from './product/dish/entities/dish.entity';
 import { Drink } from './product/drink/entities/drink.entity';
-import { User } from 'src/auth/user/entities/user.entity';
-import { UserRole } from 'src/auth/user/enums/user-role.enum';
+import { Product } from './product/entities/product.entity';
 
 @Injectable()
 export class MenuService {
@@ -33,7 +31,7 @@ export class MenuService {
       });
 
       if (products.length !== createMenuDto.products.length) {
-        throw new BadRequestException('Some products are invalid');
+        throw new BadRequestException({ code: 'SOME_PRODUCTS_ARE_INVALID' });
       }
     }
 
@@ -49,11 +47,7 @@ export class MenuService {
     }
   }
 
-  async findAllMenus(user: User): Promise<Menu[]> {
-    if (user.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
-    }
-
+  async findAllMenus(): Promise<Menu[]> {
     return this.menuRepository.find();
   }
 
@@ -84,7 +78,7 @@ export class MenuService {
       .getOne();
 
     if (!menu) {
-      throw new BadRequestException('Menu not found');
+      throw new NotFoundException({ code: 'MENU_NOT_FOUND' });
     }
 
     const dishes: Array<any> = [];

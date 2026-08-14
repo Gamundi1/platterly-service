@@ -22,22 +22,28 @@ export class TableService {
     private readonly bookingService: BookingService,
   ) {}
 
-  createTable(newTable: CreateTableDto) {
+  async createTable(newTable: CreateTableDto) {
     try {
       const table = this.tableRepository.create(newTable);
-      return this.tableRepository.save(table);
+      await this.tableRepository.save(table);
     } catch (error) {
-      throw new BadRequestException('Table does already exist');
+      throw new BadRequestException({ code: 'TABLE_ALREADY_EXISTS'});
     }
   }
 
-  findOne(tableNumber: number) {
+  async findOne(tableNumber: number) {
     try {
-      return this.tableRepository.findOne({
+      const table = await this.tableRepository.findOne({
         where: { number: tableNumber },
       });
+
+      if (!table) {
+        throw new BadRequestException({ code: 'TABLE_NOT_FOUND' });
+      }
+      
+      return table;
     } catch (error) {
-      throw new BadRequestException('Table not found');
+      throw new BadRequestException({ code: 'FAILED_TO_RETRIEVE_TABLE' });
     }
   }
 
@@ -84,15 +90,16 @@ export class TableService {
     const table = await tableRepository.findOne({
       where: { number: tableNumber },
     });
+
     if (!table) {
-      throw new BadRequestException('Table not found');
+      return;
     }
 
     if (
-      table.status === TableStatus.OCCUPIED &&
+      table?.status === TableStatus.OCCUPIED &&
       status === TableStatus.OCCUPIED
     ) {
-      throw new BadRequestException({ error: 'TABLE_ALREADY_OCCUPIED_ERROR' });
+      throw new BadRequestException({ code: 'TABLE_ALREADY_OCCUPIED' });
     }
 
     table.status = status;

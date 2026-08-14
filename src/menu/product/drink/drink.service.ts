@@ -25,7 +25,7 @@ export class DrinkService {
       });
 
       if (allergens.length !== createDrinkDto.allergens.length) {
-        throw new BadRequestException('Some allergens are invalid');
+        throw new BadRequestException({ code: 'SOME_ALLERGENS_ARE_INVALID' });
       }
     }
 
@@ -43,7 +43,7 @@ export class DrinkService {
 
   private handleDataBaseError(error) {
     if (error.code === DataBaseErrorCodes.DuplicatedKey) {
-      throw new BadRequestException('Name is already in use');
+      throw new BadRequestException({ code: 'DUPLICATED_KEY' });
     }
   }
 }

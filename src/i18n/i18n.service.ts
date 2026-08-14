@@ -12,12 +12,19 @@ export class I18nService {
   ) {}
 
   create(createI18nDto: CreateI18nDto) {
-    return this.i18nRepository.save(createI18nDto);
+
+    try {
+      const translation = this.i18nRepository.create(createI18nDto);
+
+      this.i18nRepository.save(createI18nDto)
+    } catch (error) {
+      throw new BadRequestException({ code: 'DUPLICATED_KEY' });
+    }
   }
 
   async findAll(language: string) {
     if (!language) {
-      throw new BadRequestException({ code: 'INVALID_LANGUAGE' });
+      throw new BadRequestException({ code: 'LANGUAGE_REQUIRED' });
     }
 
     const translations = await this.i18nRepository

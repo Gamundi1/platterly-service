@@ -6,6 +6,7 @@ import {
   ParseUUIDPipe,
   Post,
   Req,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@shared/guards/auth.guard';
@@ -17,6 +18,7 @@ import { CreateIngredientDto } from './product/dish/dto/create-ingredient.dto';
 import { DrinkService } from './product/drink/drink.service';
 import { CreateDrinkDto } from './product/drink/dto/create-drink.dto';
 import type { AuthenticatedRequest } from '@shared/types/authenticated-request.type';
+import { UserRole } from 'src/auth/user/enums/user-role.enum';
 
 @Controller('v1/menu')
 export class MenuController {
@@ -28,14 +30,25 @@ export class MenuController {
 
   @UseGuards(AuthGuard)
   @Post()
-  createNewMenu(@Body() createMenuDto: CreateMenuDto) {
+  createNewMenu(
+    @Req() request: AuthenticatedRequest,
+    @Body() createMenuDto: CreateMenuDto,
+  ) {
+    if (request.user.role !== UserRole.ADMIN) {
+      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+    }
+
     return this.menuService.createMenu(createMenuDto);
   }
 
   @UseGuards(AuthGuard)
   @Get('/all')
   findAllMenus(@Req() request: AuthenticatedRequest) {
-    return this.menuService.findAllMenus(request.user);
+    if (request.user.role !== UserRole.ADMIN) {
+      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+    }
+
+    return this.menuService.findAllMenus();
   }
 
   @Get('available')
@@ -48,23 +61,42 @@ export class MenuController {
     return this.menuService.getMenuById(id);
   }
 
+  @UseGuards(AuthGuard)
   @Post('dish')
-  createNewDish(@Body() dishDto: CreateDishDto) {
+  createNewDish(
+    @Body() dishDto: CreateDishDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (request.user.role !== UserRole.ADMIN) {
+      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+    }
+
     return this.dishService.createDish(dishDto);
   }
 
-  @Get('dish/:id')
-  getSingleDish(@Param('id', ParseUUIDPipe) id: string) {
-    return this.dishService.getSingleDish(id);
-  }
-
+  @UseGuards(AuthGuard)
   @Post('ingredient')
-  createNewIngredient(@Body() ingredientDto: CreateIngredientDto) {
+  createNewIngredient(
+    @Body() ingredientDto: CreateIngredientDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (request.user.role !== UserRole.ADMIN) {
+      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+    }
+
     return this.dishService.createIngredient(ingredientDto);
   }
 
+  @UseGuards(AuthGuard)
   @Post('drink')
-  createNewDrink(@Body() drinkDto: CreateDrinkDto) {
+  createNewDrink(
+    @Body() drinkDto: CreateDrinkDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (request.user.role !== UserRole.ADMIN) {
+      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+    }
+
     return this.drinkService.createDrink(drinkDto);
   }
 }
