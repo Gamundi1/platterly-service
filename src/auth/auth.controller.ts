@@ -2,17 +2,17 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Post,
   Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@shared/guards/auth.guard';
+import type { AuthenticatedRequest } from '@shared/types/authenticated-request.type';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './user/dto/create-user.dto';
 import { GetUserDto } from './user/dto/get-user.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { AuthGuard } from '@shared/guards/auth.guard';
-import type { AuthenticatedRequest } from '@shared/types/authenticated-request.type';
 
 @Controller('v1/auth')
 export class AuthController {
@@ -34,6 +34,8 @@ export class AuthController {
     };
   }
 
+  @UseGuards(AuthGuard)
+  @HttpCode(204)
   @Post('log-out')
   async logOut(@Res({ passthrough: true }) response) {
     response.clearCookie('refresh-token', {
@@ -43,10 +45,18 @@ export class AuthController {
     });
   }
 
-  @Get('user')
   @UseGuards(AuthGuard)
+  @Get('user')
   getUser(@Req() request: AuthenticatedRequest) {
-    return request.user;
+    const user = request.user;
+    return {
+      id: user.id,
+      name: user.name,
+      surname: user.surname,
+      secondSurname: user.secondSurname,
+      email: user.email,
+      role: user.role,
+    };
   }
 
   @Post('register')

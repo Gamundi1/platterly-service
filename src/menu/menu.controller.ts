@@ -5,6 +5,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
   Req,
   UnauthorizedException,
   UseGuards,
@@ -19,6 +20,7 @@ import { DrinkService } from './product/drink/drink.service';
 import { CreateDrinkDto } from './product/drink/dto/create-drink.dto';
 import type { AuthenticatedRequest } from '@shared/types/authenticated-request.type';
 import { UserRole } from 'src/auth/user/enums/user-role.enum';
+import { UpdateMenuDto } from './dto/update-menu.dto';
 
 @Controller('v1/menu')
 export class MenuController {
@@ -42,6 +44,19 @@ export class MenuController {
   }
 
   @UseGuards(AuthGuard)
+  @Put('modify')
+  modifyMenu(
+    @Req() request: AuthenticatedRequest,
+    @Body() updateMenuDto: UpdateMenuDto,
+  ) {
+    if (request.user.role !== UserRole.ADMIN) {
+      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+    }
+
+    return this.menuService.modifyMenu(updateMenuDto);
+  }
+
+  @UseGuards(AuthGuard)
   @Get('/all')
   findAllMenus(@Req() request: AuthenticatedRequest) {
     if (request.user.role !== UserRole.ADMIN) {
@@ -56,7 +71,7 @@ export class MenuController {
     return this.menuService.findAllAvailableMenus();
   }
 
-  @Get(':id')
+  @Get('info/:id')
   getMenuById(@Param('id', ParseUUIDPipe) id: string) {
     return this.menuService.getMenuById(id);
   }
@@ -72,6 +87,15 @@ export class MenuController {
     }
 
     return this.dishService.createDish(dishDto);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('dish')
+  getAllDishes(@Req() request: AuthenticatedRequest) {
+    if (request.user.role !== UserRole.ADMIN) {
+      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+    }
+    return this.dishService.getAllDishes();
   }
 
   @UseGuards(AuthGuard)

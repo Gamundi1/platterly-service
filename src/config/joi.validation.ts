@@ -1,6 +1,7 @@
 import * as Joi from 'joi';
 
 export const JoiValidationSchema = Joi.object({
+  ENABLED_CLIENT_DOMAIN: Joi.string().default('http://localhost:4200'),
   PORT: Joi.number().default(3000),
   DB_HOST: Joi.string().default('localhost'),
   DB_PORT: Joi.number().default(5432),

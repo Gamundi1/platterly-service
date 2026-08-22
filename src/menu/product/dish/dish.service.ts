@@ -21,6 +21,22 @@ export class DishService {
     private readonly dishRepository: Repository<Dish>,
   ) {}
 
+  async getAllDishes() {
+    let dishes = await this.dishRepository.find({
+      relations: {
+        ingredients: true,
+      },
+    });
+
+    dishes.map((dish) => {
+      let ingredients = dish.ingredients.map((ingredient) => {
+        return ingredient.name;
+      });
+      dish.ingredients = ingredients as any;
+    });
+    return dishes;
+  }
+
   async createDish(createDishDto: CreateDishDto) {
     let ingredients: Ingredient[] = [];
 
@@ -67,10 +83,11 @@ export class DishService {
         allergens,
       });
 
-      const createdIngredient = await this.ingredientRepository.save(ingredient);
+      const createdIngredient =
+        await this.ingredientRepository.save(ingredient);
       return {
-        id: createdIngredient.id
-      }
+        id: createdIngredient.id,
+      };
     } catch (error) {
       this.handleDataBaseError(error);
     }

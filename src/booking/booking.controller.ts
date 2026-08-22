@@ -27,9 +27,6 @@ export class BookingController {
     @Body() createBookingDto: CreateBookingDto,
     @Req() request: AuthenticatedRequest,
   ) {
-    if (request.user.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
-    }
     return this.bookingService.createBooking(createBookingDto, request.user);
   }
 
@@ -93,6 +90,17 @@ export class BookingController {
     @Body('status') status: BookingStatus,
     @Req() request: AuthenticatedRequest,
   ) {
-    return this.bookingService.updateBookingAndTableStatus(bookingId, status, request.user);
+    if (
+      request.user.role !== UserRole.HOST &&
+      request.user.role === UserRole.USER &&
+      status !== BookingStatus.CANCELLED
+    ) {
+      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+    }
+    return this.bookingService.updateBookingAndTableStatus(
+      bookingId,
+      status,
+      request.user,
+    );
   }
 }

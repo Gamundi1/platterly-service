@@ -43,55 +43,56 @@ export class BookingService {
     createBookingDto: CreateBookingDto,
     user: User,
   ): Promise<GetBookingDto> {
-    let availableHour: AvailableHours | null;
-    let table: Table | null;
+    return this.dataSource.transaction(async (manager) => {
+      const availableHour = await manager.findOne(AvailableHours, {
+        where: { id: createBookingDto.availableHoursId },
+      });
 
-    availableHour = await this.availableHoursRepository.findOne({
-      where: { id: createBookingDto.availableHoursId },
-    });
+      if (!availableHour) {
+        throw new BadRequestException({ code: 'INVALID_HOUR_INTERVAL' });
+      }
 
-    if (!availableHour) {
-      throw new BadRequestException({ code: 'INVALID_HOUR_INTERVAL' });
-    }
+      const table = await manager.findOne(Table, {
+        where: { number: createBookingDto.tableNumber },
+      });
 
-    table = await this.tableService.findOne(createBookingDto.tableNumber);
+      if (!table) {
+        throw new BadRequestException({ code: 'INVALID_TABLE_NUMBER' });
+      }
 
-    if (!table) {
-      throw new BadRequestException({ code: 'INVALID_TABLE_NUMBER' });
-    }
+      const booking = manager.create(Booking, {
+        ...createBookingDto,
+        availableHours: availableHour,
+        table: table,
+      });
+      const savedBooking = await manager.save(booking);
 
-    const booking = this.bookingRepository.create({
-      ...createBookingDto,
-      availableHours: availableHour,
-      table: table,
-    });
-    const savedBooking = await this.bookingRepository.save(booking);
+      const bookingGuest = await manager.create(BookingGuest, {
+        booking: savedBooking,
+        user,
+        owner: true,
+      });
 
-    const bookingGuest = await this.bookingGuestRepository.create({
-      booking: savedBooking,
-      user,
-      owner: true,
-    });
+      await manager.save(bookingGuest);
 
-    await this.bookingGuestRepository.save(bookingGuest);
-
-    return {
-      id: savedBooking.id,
-      date: savedBooking.date,
-      guests: savedBooking.guests,
-      table: {
-        number: table.number,
-        status: table.status,
-      },
-      hour: availableHour,
-      users: [
-        {
-          name: user.name,
-          id: user.id,
+      return {
+        id: savedBooking.id,
+        date: savedBooking.date,
+        guests: savedBooking.guests,
+        table: {
+          number: table.number,
+          status: table.status,
         },
-      ],
-      status: savedBooking.status,
-    };
+        hour: availableHour,
+        users: [
+          {
+            name: user.name,
+            id: user.id,
+          },
+        ],
+        status: savedBooking.status,
+      };
+    });
   }
 
   async updateBookingAndTableStatus(
@@ -102,11 +103,11 @@ export class BookingService {
     await this.dataSource.transaction(async (manager) => {
       const bookingRepository = manager.getRepository(Booking);
 
-      if (user.role !== UserRole.HOST && (user.role === UserRole.USER && bookingStatus !== BookingStatus.CANCELLED)) {
-        throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
-      }
-
-      const booking = await this.getBookingById(bookingId, user, user.role === UserRole.HOST);
+      const booking = await this.getBookingById(
+        bookingId,
+        user,
+        user.role === UserRole.HOST,
+      );
 
       booking.status = bookingStatus;
       await this.tableService.updateTableStatus(
@@ -202,7 +203,14 @@ export class BookingService {
       .createQueryBuilder('booking')
       .leftJoin('booking.table', 'table')
       .leftJoin('booking.availableHours', 'availableHours')
-      .leftJoin('booking.bookingGuests', 'bookingGuests')
+      .leftJoin(
+        'booking.bookingGuests',
+        'bookingGuests',
+        'bookingGuests.owner = :owner',
+        {
+          owner: true,
+        },
+      )
       .leftJoin('bookingGuests.user', 'guestUser')
       .select([
         'booking.id AS id',
@@ -213,9 +221,9 @@ export class BookingService {
         'availableHours.id AS availableHourId',
         'table.number AS tableNumber',
         'table.status AS tableStatus',
-        'ARRAY_AGG(guestUser.id) FILTER (WHERE bookingGuests.owner = true) AS ownerIds',
-        'ARRAY_AGG(guestUser.name) FILTER (WHERE bookingGuests.owner = true) AS ownerNames',
-        'ARRAY_AGG(guestUser.surname) FILTER (WHERE bookingGuests.owner = true) AS ownerSurnames',
+        'guestUser.idA AS ownerId',
+        'guestUser.name AS ownerName',
+        'guestUser.surname AS ownerSurname',
       ])
       .where('booking.date = :date', { date })
       .andWhere('booking.status != :status', {
@@ -236,8 +244,8 @@ export class BookingService {
       hour: { id: booking.availablehourid, interval: booking.interval },
       users: [
         {
-          name: `${booking.ownernames?.[0] ?? ''} ${booking.ownersurnames?.[0] ?? ''}`.trim(),
-          id: booking.ownerids?.[0],
+          name: `${booking.ownernames ?? ''} ${booking.ownersurnames ?? ''}`.trim(),
+          id: booking.ownerid,
         },
       ],
       status: booking.status,

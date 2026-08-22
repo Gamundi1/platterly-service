@@ -5,11 +5,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
-import { CreateUserDto } from './dto/create-user.dto';
 import { DataBaseErrorCodes } from '@shared/interfaces/data-base-error-codes.interface';
+import { Repository } from 'typeorm';
+import { CreateUserDto } from './dto/create-user.dto';
 import { GetUserDto } from './dto/get-user.dto';
+import { User } from './entities/user.entity';
 import { UserRole } from './enums/user-role.enum';
 
 @Injectable()
@@ -24,7 +24,7 @@ export class UserService {
 
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
-      throw new NotFoundException({ code: 'USER_NOT_FOUND' });
+      throw new UnauthorizedException({ code: 'INVALID_CREDENTIALS' });
     }
 
     if (user.password !== password) {

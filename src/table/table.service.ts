@@ -31,22 +31,6 @@ export class TableService {
     }
   }
 
-  async findOne(tableNumber: number) {
-    try {
-      const table = await this.tableRepository.findOne({
-        where: { number: tableNumber },
-      });
-
-      if (!table) {
-        throw new BadRequestException({ code: 'TABLE_NOT_FOUND' });
-      }
-      
-      return table;
-    } catch (error) {
-      throw new BadRequestException({ code: 'FAILED_TO_RETRIEVE_TABLE' });
-    }
-  }
-
   async findAllAvailableTablesByDate(date: string) {
     const bookings = await this.mapBookingsToTableNumbers(date);
     const availableHours = await this.bookingService.getAvailableHours();

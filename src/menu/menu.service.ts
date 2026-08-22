@@ -1,7 +1,7 @@
 import {
   BadRequestException,
   Injectable,
-  NotFoundException
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataBaseErrorCodes } from '@shared/interfaces/data-base-error-codes.interface';
@@ -11,6 +11,7 @@ import { Menu } from './entities/menu.entity';
 import { Dish } from './product/dish/entities/dish.entity';
 import { Drink } from './product/drink/entities/drink.entity';
 import { Product } from './product/entities/product.entity';
+import { UpdateMenuDto } from './dto/update-menu.dto';
 
 @Injectable()
 export class MenuService {
@@ -65,6 +66,35 @@ export class MenuService {
       .getMany();
 
     return availableMenus;
+  }
+
+  async modifyMenu(updateMenuDto: UpdateMenuDto) {
+    const menu = await this.menuRepository.findOne({
+      where: { id: updateMenuDto.id },
+      relations: {
+        products: true,
+      },
+    });
+
+    if (!menu) {
+      throw new NotFoundException({ code: 'MENU_NOT_FOUND' });
+    }
+
+    const products = await this.productRepository.find({
+      where: {
+        id: In(updateMenuDto.products),
+      },
+    });
+
+    if (products.length !== updateMenuDto.products.length) {
+      throw new BadRequestException({ code: 'SOME_PRODUCTS_ARE_INVALID' });
+    }
+
+    menu.availableFrom = updateMenuDto.availableFrom;
+    menu.availableTo = updateMenuDto.availableTo;
+    menu.products = products;
+
+    return this.menuRepository.save(menu);
   }
 
   async getMenuById(id: string) {
@@ -131,11 +161,11 @@ export class MenuService {
     });
 
     if (!products) {
-      throw new BadRequestException('Provide a valid list of products');
+      throw new BadRequestException({ code: 'NON_PROVIDED_PRODUCTS' });
     }
 
     if (products.length !== uuids.length) {
-      throw new BadRequestException('Some products are invalid');
+      throw new NotFoundException({ code: 'SOME_PRODUCTS_NOT_FOUND' });
     }
 
     return products;
@@ -143,7 +173,7 @@ export class MenuService {
 
   private handleDataBaseError(error) {
     if (error.code === DataBaseErrorCodes.DuplicatedKey) {
-      throw new BadRequestException('Name is already in use');
+      throw new BadRequestException({ code: 'NAME_ALREADY_IN_USE' });
     }
   }
 }

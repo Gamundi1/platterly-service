@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/auth/user/entities/user.entity';
@@ -9,6 +14,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { GetBookingOrdersDto } from './dto/get-booking-orders.dto';
 import { Order } from './entities/order.entity';
 import { OrderStatus } from './enum/order-status.enum';
+import { PayOrdersDto } from './dto/pay-orders.dto';
 
 @Injectable()
 export class OrderService {
@@ -117,21 +123,27 @@ export class OrderService {
 
   async getTotalOrdersPriceByBookingId(bookingId: string): Promise<any> {
     let orders: Order[] = await this.retrieveBookingOrders(bookingId);
+
+    if (orders.length === 0) {
+      throw new NotFoundException({ code: 'NO_ORDERS_IN_BOOKING' });
+    }
+
     let totalPrice = 0;
+    let orderToPay: string[] = [];
 
     orders.forEach((order) => {
       if (order.isPaid) {
         return;
       }
+
+      orderToPay.push(order.id);
+
       order.orderProducts.forEach((product) => {
         totalPrice += product.product.price * product.quantity;
       });
     });
 
-    if (!totalPrice) {
-      throw new BadRequestException({ code: 'NO_UNPAID_ORDERS_LEFT' });
-    }
-    return { totalPrice };
+    return { ordersUnpaid: orderToPay, totalPrice };
   }
 
   async getTotalOrdersPriceByBookingIdAndUser(
@@ -140,6 +152,7 @@ export class OrderService {
   ): Promise<any> {
     let orders: Order[] = await this.retrieveBookingOrders(bookingId);
     let totalPrice = 0;
+    let orderToPay: string[] = [];
 
     orders.forEach((order) => {
       if (order.isPaid) {
@@ -150,16 +163,41 @@ export class OrderService {
         return;
       }
 
+      orderToPay.push(order.id);
+
       order.orderProducts.forEach((product) => {
         totalPrice += product.product.price * product.quantity;
       });
     });
 
-    if (!totalPrice) {
-      throw new BadRequestException({ code: 'NO_UNPAID_ORDERS_LEFT' });
+    return {
+      ordersUnpaid: orderToPay,
+      totalPrice,
+    };
+  }
+
+  async payOrdersByIds(payOrderDto: PayOrdersDto): Promise<void> {
+    if (payOrderDto.orderIds.length === 0) {
+      throw new BadRequestException({ code: 'NO_ORDERS_PROVIDED' });
     }
 
-    return { totalPrice };
+    const orders = await this.orderRepository.findByIds(payOrderDto.orderIds);
+
+    if (orders.length !== payOrderDto.orderIds.length) {
+      throw new NotFoundException({ code: 'SOME_ORDERS_ARE_INVALID' });
+    }
+
+    orders.forEach((order) => {
+      if (order.isPaid) {
+        throw new BadRequestException({ code: 'SOME_ORDERS_ALREADY_PAID' });
+      }
+      order.isPaid = true;
+    });
+    try {
+      await this.orderRepository.save(orders);
+    } catch (error) {
+      throw new BadRequestException({ code: 'FAILED_TO_PAY_ORDERS' });
+    }
   }
 
   async getOrdersByDate(date: string): Promise<GetBookingOrdersDto[]> {
