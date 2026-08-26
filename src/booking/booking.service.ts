@@ -3,6 +3,8 @@ import {
   forwardRef,
   Inject,
   Injectable,
+  NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/auth/user/entities/user.entity';
@@ -17,6 +19,7 @@ import { BookingGuest } from './entities/booking-guests.entity';
 import { Booking } from './entities/booking.entity';
 import { BookingStatus } from './enum/booking-status.enum';
 import { GetBookingDto } from './dto/get-booking.dto';
+import { UserRole } from 'src/auth/user/enums/user-role.enum';
 
 @Injectable()
 export class BookingService {
@@ -40,74 +43,79 @@ export class BookingService {
     createBookingDto: CreateBookingDto,
     user: User,
   ): Promise<GetBookingDto> {
-    let availableHour: AvailableHours | null;
-    let table: Table | null;
+    return this.dataSource.transaction(async (manager) => {
+      const availableHour = await manager.findOne(AvailableHours, {
+        where: { id: createBookingDto.availableHoursId },
+      });
 
-    availableHour = await this.availableHoursRepository.findOne({
-      where: { id: createBookingDto.availableHoursId },
-    });
+      if (!availableHour) {
+        throw new BadRequestException({
+          code: 'INVALID_HOUR_INTERVAL',
+          label: 'invalid_hour_error_title',
+          message: 'invalid_hour_error_message',
+        });
+      }
 
-    if (!availableHour) {
-      throw new BadRequestException({ code: 'INVALID_HOUR_INTERVAL' });
-    }
+      const table = await manager.findOne(Table, {
+        where: { number: createBookingDto.tableNumber },
+      });
 
-    table = await this.tableService.findOne(createBookingDto.tableNumber);
+      if (!table) {
+        throw new BadRequestException({
+          code: 'INVALID_TABLE_NUMBER',
+          label: 'invalid_table_error_title',
+          message: 'invalid_table_error_message',
+        });
+      }
 
-    if (!table) {
-      throw new BadRequestException({ code: 'INVALID_TABLE_NUMBER' });
-    }
+      const booking = manager.create(Booking, {
+        ...createBookingDto,
+        availableHours: availableHour,
+        table: table,
+      });
+      const savedBooking = await manager.save(booking);
 
-    const booking = this.bookingRepository.create({
-      ...createBookingDto,
-      availableHours: availableHour,
-      table: table,
-    });
-    const savedBooking = await this.bookingRepository.save(booking);
+      const bookingGuest = await manager.create(BookingGuest, {
+        booking: savedBooking,
+        user,
+        owner: true,
+      });
 
-    const bookingGuest = await this.bookingGuestRepository.create({
-      booking: savedBooking,
-      user,
-      owner: true,
-    });
+      await manager.save(bookingGuest);
 
-    await this.bookingGuestRepository.save(bookingGuest);
-
-    return {
-      id: savedBooking.id,
-      date: savedBooking.date,
-      guests: savedBooking.guests,
-      table: {
-        number: table.number,
-        status: table.status,
-      },
-      hour: availableHour,
-      users: [
-        {
-          name: user.name,
-          id: user.id,
+      return {
+        id: savedBooking.id,
+        date: savedBooking.date,
+        guests: savedBooking.guests,
+        table: {
+          number: table.number,
+          status: table.status,
         },
-      ],
-      status: savedBooking.status,
-    };
+        hour: availableHour,
+        users: [
+          {
+            name: user.name,
+            id: user.id,
+          },
+        ],
+        status: savedBooking.status,
+      };
+    });
   }
 
   async updateBookingAndTableStatus(
     bookingId: string,
     bookingStatus: BookingStatus,
+    user: User,
   ) {
     await this.dataSource.transaction(async (manager) => {
       const bookingRepository = manager.getRepository(Booking);
 
-      const booking = await bookingRepository.findOne({
-        where: { id: bookingId },
-        relations: { table: true },
-      });
-
-      if (!booking) {
-        throw new BadRequestException({
-          code: 'BOOKING_NOT_FOUND',
-        });
-      }
+      const booking = await this.getBookingById(
+        bookingId,
+        user,
+        user.role === UserRole.HOST,
+      );
 
       booking.status = bookingStatus;
       await this.tableService.updateTableStatus(
@@ -156,6 +164,8 @@ export class BookingService {
     if (booking.users.length >= booking.guests) {
       throw new BadRequestException({
         code: 'BOOKING_FULL',
+        label: 'booking_full_error_title',
+        message: 'booking_full_error_message',
       });
     }
 
@@ -166,6 +176,8 @@ export class BookingService {
     if (existingGuest) {
       throw new BadRequestException({
         code: 'USER_ALREADY_IN_BOOKING',
+        label: 'user_already_in_booking_error_title',
+        message: 'user_already_in_booking_error_message',
       });
     }
 
@@ -175,6 +187,8 @@ export class BookingService {
     ) {
       throw new BadRequestException({
         code: 'BOOKING_NOT_ACTIVE',
+        label: 'booking_not_active_error_title',
+        message: 'booking_not_active_error_message',
       });
     }
 
@@ -248,7 +262,7 @@ export class BookingService {
   async getBookingById(
     uuid: string,
     user: User,
-    tryingToJoin: boolean = false,
+    avoidVerification: boolean = false,
   ): Promise<GetBookingDto> {
     const booking = await this.bookingRepository.findOne({
       where: { id: uuid },
@@ -259,14 +273,22 @@ export class BookingService {
       },
     });
     if (!booking) {
-      throw new BadRequestException({ code: 'BOOKING_NOT_FOUND' });
+      throw new NotFoundException({
+        code: 'BOOKING_NOT_FOUND',
+        label: 'booking_not_found_error_title',
+        message: 'booking_not_found_error_message',
+      });
     }
 
     if (
-      !tryingToJoin &&
+      !avoidVerification &&
       !booking.bookingGuests.some((guest) => guest.user.id === user.id)
     ) {
-      throw new BadRequestException({ code: 'USER_NOT_IN_BOOKING' });
+      throw new UnauthorizedException({
+        code: 'USER_NOT_IN_BOOKING',
+        label: 'user_not_in_booking_error_title',
+        message: 'user_not_in_booking_error_message',
+      });
     }
 
     return {
@@ -297,7 +319,11 @@ export class BookingService {
       case BookingStatus.COMPLETED:
         return TableStatus.NEEDS_CLEANING;
       default:
-        throw new BadRequestException({ code: 'INVALID_BOOKING_STATUS' });
+        throw new BadRequestException({
+          code: 'INVALID_BOOKING_STATUS',
+          label: 'invalid_booking_status_error_title',
+          message: 'invalid_booking_status_error_message',
+        });
     }
   }
 }

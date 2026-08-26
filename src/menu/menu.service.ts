@@ -1,12 +1,17 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataBaseErrorCodes } from '@shared/interfaces/data-base-error-codes.interface';
 import { In, Repository } from 'typeorm';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { Menu } from './entities/menu.entity';
-import { Product } from './product/entities/product.entity';
 import { Dish } from './product/dish/entities/dish.entity';
 import { Drink } from './product/drink/entities/drink.entity';
+import { Product } from './product/entities/product.entity';
+import { UpdateMenuDto } from './dto/update-menu.dto';
 
 @Injectable()
 export class MenuService {
@@ -27,7 +32,11 @@ export class MenuService {
       });
 
       if (products.length !== createMenuDto.products.length) {
-        throw new BadRequestException('Some products are invalid');
+        throw new BadRequestException({
+          code: 'SOME_PRODUCTS_ARE_INVALID',
+          label: 'some_products_are_invalid_error_title',
+          message: 'some_products_are_invalid_error_message',
+        });
       }
     }
 
@@ -41,6 +50,10 @@ export class MenuService {
     } catch (error) {
       this.handleDataBaseError(error);
     }
+  }
+
+  async findAllMenus(): Promise<Menu[]> {
+    return this.menuRepository.find();
   }
 
   async findAllAvailableMenus() {
@@ -59,6 +72,43 @@ export class MenuService {
     return availableMenus;
   }
 
+  async modifyMenu(updateMenuDto: UpdateMenuDto) {
+    const menu = await this.menuRepository.findOne({
+      where: { id: updateMenuDto.id },
+      relations: {
+        products: true,
+      },
+    });
+
+    if (!menu) {
+      throw new NotFoundException({
+        code: 'MENU_NOT_FOUND',
+        label: 'menu_not_found_error_title',
+        message: 'menu_not_found_error_message',
+      });
+    }
+
+    const products = await this.productRepository.find({
+      where: {
+        id: In(updateMenuDto.products),
+      },
+    });
+
+    if (products.length !== updateMenuDto.products.length) {
+      throw new BadRequestException({
+        code: 'SOME_PRODUCTS_ARE_INVALID',
+        label: 'some_products_are_invalid_error_title',
+        message: 'some_products_are_invalid_error_message',
+      });
+    }
+
+    menu.availableFrom = updateMenuDto.availableFrom;
+    menu.availableTo = updateMenuDto.availableTo;
+    menu.products = products;
+
+    return this.menuRepository.save(menu);
+  }
+
   async getMenuById(id: string) {
     const queryBuilder = this.menuRepository.createQueryBuilder();
 
@@ -70,7 +120,11 @@ export class MenuService {
       .getOne();
 
     if (!menu) {
-      throw new BadRequestException('Menu not found');
+      throw new NotFoundException({
+        code: 'MENU_NOT_FOUND',
+        label: 'menu_not_found_error_title',
+        message: 'menu_not_found_error_message',
+      });
     }
 
     const dishes: Array<any> = [];
@@ -123,11 +177,19 @@ export class MenuService {
     });
 
     if (!products) {
-      throw new BadRequestException('Provide a valid list of products');
+      throw new BadRequestException({
+        code: 'NON_PROVIDED_PRODUCTS',
+        label: 'non_provided_products_error_title',
+        message: 'non_provided_products_error_message',
+      });
     }
 
     if (products.length !== uuids.length) {
-      throw new BadRequestException('Some products are invalid');
+      throw new NotFoundException({
+        code: 'SOME_PRODUCTS_NOT_FOUND',
+        label: 'some_products_not_found_error_title',
+        message: 'some_products_not_found_error_message',
+      });
     }
 
     return products;
@@ -135,7 +197,11 @@ export class MenuService {
 
   private handleDataBaseError(error) {
     if (error.code === DataBaseErrorCodes.DuplicatedKey) {
-      throw new BadRequestException('Name is already in use');
+      throw new BadRequestException({
+        code: 'NAME_ALREADY_IN_USE',
+        label: 'name_already_in_use_error_title',
+        message: 'name_already_in_use_error_message',
+      });
     }
   }
 }

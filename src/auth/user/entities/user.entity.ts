@@ -1,11 +1,6 @@
 import { BookingGuest } from 'src/booking/entities/booking-guests.entity';
 import { Order } from 'src/order/entities/order.entity';
-import {
-  Column,
-  Entity,
-  OneToMany,
-  PrimaryGeneratedColumn
-} from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { UserRole } from '../enums/user-role.enum';
 
 @Entity()

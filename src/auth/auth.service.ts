@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UserService } from './user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from './user/dto/create-user.dto';
@@ -19,9 +23,22 @@ export class AuthService {
     return this.issueTokens(user.id, user.email);
   }
 
-  async register(user: CreateUserDto): Promise<JwtUser> {
-    const newUser = await this.userService.registerUser(user);
-    console.log('New user registered:', newUser);
+  async register(user: CreateUserDto): Promise<JwtUser | undefined> {
+    const regEx = /^(?=.*\d)(?=.*[a-zA-Z]).{12}$/;
+
+    if (!regEx.test(user.password)) {
+      throw new UnauthorizedException({
+        code: 'PASSWORD_NOT_SATISFY_CONSTRAINTS',
+      });
+    }
+
+    let newUser;
+
+    try {
+      newUser = await this.userService.registerUser(user);
+    } catch (error) {
+      return;
+    }
     return this.issueTokens(newUser.id, newUser.email);
   }
 
@@ -29,7 +46,7 @@ export class AuthService {
     const payload = await this.verifyRefreshToken(refreshToken);
 
     if (payload.type !== 'refresh') {
-      throw new UnauthorizedException('Invalid token type');
+      throw new BadRequestException({ code: 'INVALID_TOKEN_TYPE' });
     }
 
     const user = await this.userService.findUserById(payload.id);
@@ -63,7 +80,7 @@ export class AuthService {
         secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
       });
     } catch {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException({ code: 'INVALID_REFRESH_TOKEN' });
     }
   }
 }

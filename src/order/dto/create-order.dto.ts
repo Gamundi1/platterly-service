@@ -12,7 +12,7 @@ import {
 import { OrderStatus } from '../enum/order-status.enum';
 
 class OrderProductItemDto {
-  @IsUUID('4')
+  @IsUUID()
   productId: string;
 
   @IsInt()

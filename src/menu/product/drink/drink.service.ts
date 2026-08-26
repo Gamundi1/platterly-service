@@ -25,7 +25,11 @@ export class DrinkService {
       });
 
       if (allergens.length !== createDrinkDto.allergens.length) {
-        throw new BadRequestException('Some allergens are invalid');
+        throw new BadRequestException({
+          code: 'SOME_ALLERGENS_ARE_INVALID',
+          label: 'some_allergens_are_invalid_error_title',
+          message: 'some_allergens_are_invalid_error_message',
+        });
       }
     }
 
@@ -41,9 +45,17 @@ export class DrinkService {
     }
   }
 
+  getAllDrinks() {
+    return this.drinkRepository.find();
+  }
+
   private handleDataBaseError(error) {
     if (error.code === DataBaseErrorCodes.DuplicatedKey) {
-      throw new BadRequestException('Name is already in use');
+      throw new BadRequestException({
+        code: 'DUPLICATED_KEY',
+        label: 'duplicated_key_error_title',
+        message: 'duplicated_key_error_message',
+      });
     }
   }
 }

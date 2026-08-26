@@ -21,6 +21,22 @@ export class DishService {
     private readonly dishRepository: Repository<Dish>,
   ) {}
 
+  async getAllDishes() {
+    let dishes = await this.dishRepository.find({
+      relations: {
+        ingredients: true,
+      },
+    });
+
+    dishes.map((dish) => {
+      let ingredients = dish.ingredients.map((ingredient) => {
+        return ingredient.name;
+      });
+      dish.ingredients = ingredients as any;
+    });
+    return dishes;
+  }
+
   async createDish(createDishDto: CreateDishDto) {
     let ingredients: Ingredient[] = [];
 
@@ -30,52 +46,26 @@ export class DishService {
       });
 
       if (ingredients.length !== createDishDto.ingredients.length) {
-        throw new BadRequestException('Some ingredients are invalid');
+        throw new BadRequestException({
+          code: 'SOME_INGREDIENTS_ARE_INVALID',
+          label: 'some_ingredients_are_invalid_error_title',
+          message: 'some_ingredients_are_invalid_error_message',
+        });
       }
     }
-
     try {
       const dish = this.dishRepository.create({
         ...createDishDto,
         ingredients,
       });
 
-      await this.dishRepository.save(dish);
+      const createdDish = await this.dishRepository.save(dish);
+      return {
+        id: createdDish.id,
+      };
     } catch (error) {
       this.handleDataBaseError(error);
     }
-  }
-
-  async getSingleDish(id: string) {
-    const queryBuilder = this.dishRepository.createQueryBuilder();
-
-    const dish = await queryBuilder
-      .where({ id })
-      .leftJoinAndSelect('Dish.ingredients', 'Ingredients')
-      .leftJoinAndSelect('Ingredients.allergens', 'Allergens')
-      .select()
-      .getOne();
-
-    if (!dish) {
-      throw new BadRequestException('Dish not found');
-    }
-
-    let allergens = new Set();
-
-    dish.ingredients.forEach((ingredient) => {
-      ingredient.allergens.forEach((allergen) => {
-        allergens.add({
-          name: allergen.name,
-          icon: allergen.icon,
-        });
-      });
-      ingredient.allergens = [];
-    });
-
-    return {
-      ...dish,
-      allergens: Array.from(allergens),
-    };
   }
 
   async createIngredient(createIngredientDto: CreateIngredientDto) {
@@ -87,7 +77,11 @@ export class DishService {
       });
 
       if (allergens.length !== createIngredientDto.allergens.length) {
-        throw new BadRequestException('Some allergens are invalid');
+        throw new BadRequestException({
+          code: 'SOME_ALLERGENS_ARE_INVALID',
+          label: 'some_allergens_are_invalid_error_title',
+          message: 'some_allergens_are_invalid_error_message',
+        });
       }
     }
 
@@ -97,7 +91,11 @@ export class DishService {
         allergens,
       });
 
-      await this.ingredientRepository.save(ingredient);
+      const createdIngredient =
+        await this.ingredientRepository.save(ingredient);
+      return {
+        id: createdIngredient.id,
+      };
     } catch (error) {
       this.handleDataBaseError(error);
     }
@@ -105,7 +103,11 @@ export class DishService {
 
   private handleDataBaseError(error) {
     if (error.code === DataBaseErrorCodes.DuplicatedKey) {
-      throw new BadRequestException('Name is already in use');
+      throw new BadRequestException({
+        code: 'DUPLICATED_KEY',
+        label: 'duplicated_key_error_title',
+        message: 'duplicated_key_error_message',
+      });
     }
   }
 }
