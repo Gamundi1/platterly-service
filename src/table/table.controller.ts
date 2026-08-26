@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { TableService } from './table.service';
 import { CreateTableDto } from './dto/create-table.dto';
 import { AuthGuard } from '@shared/guards/auth.guard';
@@ -11,9 +20,16 @@ export class TableController {
 
   @UseGuards(AuthGuard)
   @Post()
-  createTable(@Body() createTableDto: CreateTableDto, @Req() request: AuthenticatedRequest) {
+  createTable(
+    @Body() createTableDto: CreateTableDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
     if (request.user.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
     }
     return this.tableService.createTable(createTableDto);
   }

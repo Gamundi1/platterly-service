@@ -49,7 +49,11 @@ export class BookingService {
       });
 
       if (!availableHour) {
-        throw new BadRequestException({ code: 'INVALID_HOUR_INTERVAL' });
+        throw new BadRequestException({
+          code: 'INVALID_HOUR_INTERVAL',
+          label: 'invalid_hour_error_title',
+          message: 'invalid_hour_error_message',
+        });
       }
 
       const table = await manager.findOne(Table, {
@@ -57,7 +61,11 @@ export class BookingService {
       });
 
       if (!table) {
-        throw new BadRequestException({ code: 'INVALID_TABLE_NUMBER' });
+        throw new BadRequestException({
+          code: 'INVALID_TABLE_NUMBER',
+          label: 'invalid_table_error_title',
+          message: 'invalid_table_error_message',
+        });
       }
 
       const booking = manager.create(Booking, {
@@ -156,6 +164,8 @@ export class BookingService {
     if (booking.users.length >= booking.guests) {
       throw new BadRequestException({
         code: 'BOOKING_FULL',
+        label: 'booking_full_error_title',
+        message: 'booking_full_error_message',
       });
     }
 
@@ -166,6 +176,8 @@ export class BookingService {
     if (existingGuest) {
       throw new BadRequestException({
         code: 'USER_ALREADY_IN_BOOKING',
+        label: 'user_already_in_booking_error_title',
+        message: 'user_already_in_booking_error_message',
       });
     }
 
@@ -175,6 +187,8 @@ export class BookingService {
     ) {
       throw new BadRequestException({
         code: 'BOOKING_NOT_ACTIVE',
+        label: 'booking_not_active_error_title',
+        message: 'booking_not_active_error_message',
       });
     }
 
@@ -203,14 +217,7 @@ export class BookingService {
       .createQueryBuilder('booking')
       .leftJoin('booking.table', 'table')
       .leftJoin('booking.availableHours', 'availableHours')
-      .leftJoin(
-        'booking.bookingGuests',
-        'bookingGuests',
-        'bookingGuests.owner = :owner',
-        {
-          owner: true,
-        },
-      )
+      .leftJoin('booking.bookingGuests', 'bookingGuests')
       .leftJoin('bookingGuests.user', 'guestUser')
       .select([
         'booking.id AS id',
@@ -221,9 +228,9 @@ export class BookingService {
         'availableHours.id AS availableHourId',
         'table.number AS tableNumber',
         'table.status AS tableStatus',
-        'guestUser.idA AS ownerId',
-        'guestUser.name AS ownerName',
-        'guestUser.surname AS ownerSurname',
+        'ARRAY_AGG(guestUser.id) FILTER (WHERE bookingGuests.owner = true) AS ownerIds',
+        'ARRAY_AGG(guestUser.name) FILTER (WHERE bookingGuests.owner = true) AS ownerNames',
+        'ARRAY_AGG(guestUser.surname) FILTER (WHERE bookingGuests.owner = true) AS ownerSurnames',
       ])
       .where('booking.date = :date', { date })
       .andWhere('booking.status != :status', {
@@ -244,8 +251,8 @@ export class BookingService {
       hour: { id: booking.availablehourid, interval: booking.interval },
       users: [
         {
-          name: `${booking.ownernames ?? ''} ${booking.ownersurnames ?? ''}`.trim(),
-          id: booking.ownerid,
+          name: `${booking.ownernames?.[0] ?? ''} ${booking.ownersurnames?.[0] ?? ''}`.trim(),
+          id: booking.ownerids?.[0],
         },
       ],
       status: booking.status,
@@ -266,14 +273,22 @@ export class BookingService {
       },
     });
     if (!booking) {
-      throw new NotFoundException({ code: 'BOOKING_NOT_FOUND' });
+      throw new NotFoundException({
+        code: 'BOOKING_NOT_FOUND',
+        label: 'booking_not_found_error_title',
+        message: 'booking_not_found_error_message',
+      });
     }
 
     if (
       !avoidVerification &&
       !booking.bookingGuests.some((guest) => guest.user.id === user.id)
     ) {
-      throw new UnauthorizedException({ code: 'USER_NOT_IN_BOOKING' });
+      throw new UnauthorizedException({
+        code: 'USER_NOT_IN_BOOKING',
+        label: 'user_not_in_booking_error_title',
+        message: 'user_not_in_booking_error_message',
+      });
     }
 
     return {
@@ -304,7 +319,11 @@ export class BookingService {
       case BookingStatus.COMPLETED:
         return TableStatus.NEEDS_CLEANING;
       default:
-        throw new BadRequestException({ code: 'INVALID_BOOKING_STATUS' });
+        throw new BadRequestException({
+          code: 'INVALID_BOOKING_STATUS',
+          label: 'invalid_booking_status_error_title',
+          message: 'invalid_booking_status_error_message',
+        });
     }
   }
 }

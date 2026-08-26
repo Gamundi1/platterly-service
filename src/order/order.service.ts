@@ -32,17 +32,29 @@ export class OrderService {
     user: User,
   ) {
     if (createOrderDto.products.length === 0) {
-      throw new BadRequestException({ code: 'NO_PRODUCTS_IN_ORDER' });
+      throw new BadRequestException({
+        code: 'NO_PRODUCTS_IN_ORDER',
+        label: 'no_products_in_order_error_title',
+        message: 'no_products_in_order_error_message',
+      });
     }
 
     const booking = await this.bookingService.getBookingById(bookingId, user);
 
     if (!booking) {
-      throw new NotFoundException({ code: 'BOOKING_NOT_FOUND' });
+      throw new NotFoundException({
+        code: 'BOOKING_NOT_FOUND',
+        label: 'booking_not_found_error_title',
+        message: 'booking_not_found_error_message',
+      });
     }
 
     if (booking.status !== 'active') {
-      throw new UnauthorizedException({ code: 'BOOKING_NOT_ACTIVE' });
+      throw new UnauthorizedException({
+        code: 'BOOKING_NOT_ACTIVE',
+        label: 'booking_not_active_error_title',
+        message: 'booking_not_active_error_message',
+      });
     }
 
     const productIds = createOrderDto.products.map((item) => item.productId);
@@ -53,7 +65,11 @@ export class OrderService {
     const orderProducts = createOrderDto.products.map((item) => {
       const product = productsById.get(item.productId);
       if (!product) {
-        throw new BadRequestException({ code: 'SOME_PRODUCTS_ARE_INVALID' });
+        throw new BadRequestException({
+          code: 'SOME_PRODUCTS_ARE_INVALID',
+          label: 'some_products_are_invalid_error_title',
+          message: 'some_products_are_invalid_error_message',
+        });
       }
       return {
         product,
@@ -94,7 +110,11 @@ export class OrderService {
 
       return { id: order.id };
     } catch (error) {
-      throw new BadRequestException({ code: 'FAILED_TO_CREATE_ORDER' });
+      throw new BadRequestException({
+        code: 'FAILED_TO_CREATE_ORDER',
+        label: 'failed_to_create_order_error_title',
+        message: 'failed_to_create_order_error_message',
+      });
     }
   }
 
@@ -125,7 +145,11 @@ export class OrderService {
     let orders: Order[] = await this.retrieveBookingOrders(bookingId);
 
     if (orders.length === 0) {
-      throw new NotFoundException({ code: 'NO_ORDERS_IN_BOOKING' });
+      throw new NotFoundException({
+        code: 'NO_ORDERS_IN_BOOKING',
+        label: 'no_orders_in_booking_error_title',
+        message: 'no_orders_in_booking_error_message',
+      });
     }
 
     let totalPrice = 0;
@@ -178,25 +202,41 @@ export class OrderService {
 
   async payOrdersByIds(payOrderDto: PayOrdersDto): Promise<void> {
     if (payOrderDto.orderIds.length === 0) {
-      throw new BadRequestException({ code: 'NO_ORDERS_PROVIDED' });
+      throw new BadRequestException({
+        code: 'NO_ORDERS_PROVIDED',
+        label: 'no_orders_provided_error_title',
+        message: 'no_orders_provided_error_message',
+      });
     }
 
     const orders = await this.orderRepository.findByIds(payOrderDto.orderIds);
 
     if (orders.length !== payOrderDto.orderIds.length) {
-      throw new NotFoundException({ code: 'SOME_ORDERS_ARE_INVALID' });
+      throw new NotFoundException({
+        code: 'SOME_ORDERS_ARE_INVALID',
+        label: 'some_orders_are_invalid_error_title',
+        message: 'some_orders_are_invalid_error_message',
+      });
     }
 
     orders.forEach((order) => {
       if (order.isPaid) {
-        throw new BadRequestException({ code: 'SOME_ORDERS_ALREADY_PAID' });
+        throw new BadRequestException({
+          code: 'SOME_ORDERS_ALREADY_PAID',
+          label: 'some_orders_already_paid_error_title',
+          message: 'some_orders_already_paid_error_message',
+        });
       }
       order.isPaid = true;
     });
     try {
       await this.orderRepository.save(orders);
     } catch (error) {
-      throw new BadRequestException({ code: 'FAILED_TO_PAY_ORDERS' });
+      throw new BadRequestException({
+        code: 'FAILED_TO_PAY_ORDERS',
+        label: 'failed_to_pay_orders_error_title',
+        message: 'failed_to_pay_orders_error_message',
+      });
     }
   }
 
@@ -224,6 +264,8 @@ export class OrderService {
     } catch (error) {
       throw new BadRequestException({
         code: 'FAILED_TO_RETRIEVE_ORDERS',
+        label: 'failed_to_retrieve_orders_error_title',
+        message: 'failed_to_retrieve_orders_error_message',
       });
     }
 
@@ -256,11 +298,19 @@ export class OrderService {
     });
 
     if (!order) {
-      throw new NotFoundException({ code: 'ORDER_NOT_FOUND' });
+      throw new NotFoundException({
+        code: 'ORDER_NOT_FOUND',
+        label: 'order_not_found_error_title',
+        message: 'order_not_found_error_message',
+      });
     }
 
     if (order.orderStatus === status) {
-      throw new BadRequestException({ code: 'ORDER_STATUS_UNCHANGED' });
+      throw new BadRequestException({
+        code: 'ORDER_STATUS_UNCHANGED',
+        label: 'order_status_unchanged_error_title',
+        message: 'order_status_unchanged_error_message',
+      });
     }
 
     order.orderStatus = status;
@@ -289,7 +339,11 @@ export class OrderService {
       await this.orderRepository.save(order);
       this.eventEmitter.emit('order.updated', orderToEmit, order.booking.id);
     } catch (error) {
-      throw new BadRequestException({ code: 'FAILED_TO_UPDATE_ORDER_STATUS' });
+      throw new BadRequestException({
+        code: 'FAILED_TO_UPDATE_ORDER_STATUS',
+        label: 'failed_to_update_order_status_error_title',
+        message: 'failed_to_update_order_status_error_message',
+      });
     }
   }
 
@@ -302,6 +356,8 @@ export class OrderService {
     } catch (error) {
       throw new BadRequestException({
         code: 'FAILED_TO_RETRIEVE_ORDERS',
+        label: 'failed_to_retrieve_orders_error_title',
+        message: 'failed_to_retrieve_orders_error_message',
       });
     }
   }

@@ -37,7 +37,11 @@ export class MenuController {
     @Body() createMenuDto: CreateMenuDto,
   ) {
     if (request.user.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
     }
 
     return this.menuService.createMenu(createMenuDto);
@@ -50,7 +54,11 @@ export class MenuController {
     @Body() updateMenuDto: UpdateMenuDto,
   ) {
     if (request.user.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
     }
 
     return this.menuService.modifyMenu(updateMenuDto);
@@ -60,7 +68,11 @@ export class MenuController {
   @Get('/all')
   findAllMenus(@Req() request: AuthenticatedRequest) {
     if (request.user.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
     }
 
     return this.menuService.findAllMenus();
@@ -83,7 +95,11 @@ export class MenuController {
     @Req() request: AuthenticatedRequest,
   ) {
     if (request.user.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
     }
 
     return this.dishService.createDish(dishDto);
@@ -93,7 +109,11 @@ export class MenuController {
   @Get('dish')
   getAllDishes(@Req() request: AuthenticatedRequest) {
     if (request.user.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
     }
     return this.dishService.getAllDishes();
   }
@@ -105,7 +125,11 @@ export class MenuController {
     @Req() request: AuthenticatedRequest,
   ) {
     if (request.user.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
     }
 
     return this.dishService.createIngredient(ingredientDto);
@@ -118,9 +142,26 @@ export class MenuController {
     @Req() request: AuthenticatedRequest,
   ) {
     if (request.user.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
     }
 
     return this.drinkService.createDrink(drinkDto);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('drink')
+  getAllDrinks(@Req() request: AuthenticatedRequest) {
+    if (request.user.role !== UserRole.ADMIN) {
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
+    }
+    return this.drinkService.getAllDrinks();
   }
 }

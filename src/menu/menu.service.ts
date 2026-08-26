@@ -32,7 +32,11 @@ export class MenuService {
       });
 
       if (products.length !== createMenuDto.products.length) {
-        throw new BadRequestException({ code: 'SOME_PRODUCTS_ARE_INVALID' });
+        throw new BadRequestException({
+          code: 'SOME_PRODUCTS_ARE_INVALID',
+          label: 'some_products_are_invalid_error_title',
+          message: 'some_products_are_invalid_error_message',
+        });
       }
     }
 
@@ -77,7 +81,11 @@ export class MenuService {
     });
 
     if (!menu) {
-      throw new NotFoundException({ code: 'MENU_NOT_FOUND' });
+      throw new NotFoundException({
+        code: 'MENU_NOT_FOUND',
+        label: 'menu_not_found_error_title',
+        message: 'menu_not_found_error_message',
+      });
     }
 
     const products = await this.productRepository.find({
@@ -87,7 +95,11 @@ export class MenuService {
     });
 
     if (products.length !== updateMenuDto.products.length) {
-      throw new BadRequestException({ code: 'SOME_PRODUCTS_ARE_INVALID' });
+      throw new BadRequestException({
+        code: 'SOME_PRODUCTS_ARE_INVALID',
+        label: 'some_products_are_invalid_error_title',
+        message: 'some_products_are_invalid_error_message',
+      });
     }
 
     menu.availableFrom = updateMenuDto.availableFrom;
@@ -108,7 +120,11 @@ export class MenuService {
       .getOne();
 
     if (!menu) {
-      throw new NotFoundException({ code: 'MENU_NOT_FOUND' });
+      throw new NotFoundException({
+        code: 'MENU_NOT_FOUND',
+        label: 'menu_not_found_error_title',
+        message: 'menu_not_found_error_message',
+      });
     }
 
     const dishes: Array<any> = [];
@@ -161,11 +177,19 @@ export class MenuService {
     });
 
     if (!products) {
-      throw new BadRequestException({ code: 'NON_PROVIDED_PRODUCTS' });
+      throw new BadRequestException({
+        code: 'NON_PROVIDED_PRODUCTS',
+        label: 'non_provided_products_error_title',
+        message: 'non_provided_products_error_message',
+      });
     }
 
     if (products.length !== uuids.length) {
-      throw new NotFoundException({ code: 'SOME_PRODUCTS_NOT_FOUND' });
+      throw new NotFoundException({
+        code: 'SOME_PRODUCTS_NOT_FOUND',
+        label: 'some_products_not_found_error_title',
+        message: 'some_products_not_found_error_message',
+      });
     }
 
     return products;
@@ -173,7 +197,11 @@ export class MenuService {
 
   private handleDataBaseError(error) {
     if (error.code === DataBaseErrorCodes.DuplicatedKey) {
-      throw new BadRequestException({ code: 'NAME_ALREADY_IN_USE' });
+      throw new BadRequestException({
+        code: 'NAME_ALREADY_IN_USE',
+        label: 'name_already_in_use_error_title',
+        message: 'name_already_in_use_error_message',
+      });
     }
   }
 }

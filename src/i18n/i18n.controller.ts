@@ -7,7 +7,7 @@ import {
   Query,
   Req,
   UnauthorizedException,
-  UseGuards
+  UseGuards,
 } from '@nestjs/common';
 import { CreateI18nDto } from './dto/create-i18n.dto';
 import { I18nService } from './i18n.service';
@@ -21,9 +21,16 @@ export class I18nController {
 
   @UseGuards(AuthGuard)
   @Post('create')
-  create(@Body() createI18nDto: CreateI18nDto, @Req() request: AuthenticatedRequest) {
+  create(
+    @Body() createI18nDto: CreateI18nDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
     if (request.user.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
     }
 
     return this.i18nService.create(createI18nDto);

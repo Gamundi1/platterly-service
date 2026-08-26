@@ -46,7 +46,11 @@ export class DishService {
       });
 
       if (ingredients.length !== createDishDto.ingredients.length) {
-        throw new BadRequestException({ code: 'SOME_INGREDIENTS_ARE_INVALID' });
+        throw new BadRequestException({
+          code: 'SOME_INGREDIENTS_ARE_INVALID',
+          label: 'some_ingredients_are_invalid_error_title',
+          message: 'some_ingredients_are_invalid_error_message',
+        });
       }
     }
     try {
@@ -73,7 +77,11 @@ export class DishService {
       });
 
       if (allergens.length !== createIngredientDto.allergens.length) {
-        throw new BadRequestException({ code: 'SOME_ALLERGENS_ARE_INVALID' });
+        throw new BadRequestException({
+          code: 'SOME_ALLERGENS_ARE_INVALID',
+          label: 'some_allergens_are_invalid_error_title',
+          message: 'some_allergens_are_invalid_error_message',
+        });
       }
     }
 
@@ -95,7 +103,11 @@ export class DishService {
 
   private handleDataBaseError(error) {
     if (error.code === DataBaseErrorCodes.DuplicatedKey) {
-      throw new BadRequestException({ code: 'DUPLICATED_KEY' });
+      throw new BadRequestException({
+        code: 'DUPLICATED_KEY',
+        label: 'duplicated_key_error_title',
+        message: 'duplicated_key_error_message',
+      });
     }
   }
 }

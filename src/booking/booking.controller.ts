@@ -61,7 +61,11 @@ export class BookingController {
     @Req() request: AuthenticatedRequest,
   ) {
     if (request.user.role !== UserRole.HOST) {
-      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
     }
     return this.bookingService.getBookingsByDate(date);
   }
@@ -73,7 +77,11 @@ export class BookingController {
     @Req() request: AuthenticatedRequest,
   ) {
     if (request.user.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
     }
     return this.bookingService.addAvailableHour(createAvailableHourDto);
   }
@@ -95,7 +103,11 @@ export class BookingController {
       request.user.role === UserRole.USER &&
       status !== BookingStatus.CANCELLED
     ) {
-      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
     }
     return this.bookingService.updateBookingAndTableStatus(
       bookingId,

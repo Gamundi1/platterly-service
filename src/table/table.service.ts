@@ -27,7 +27,11 @@ export class TableService {
       const table = this.tableRepository.create(newTable);
       await this.tableRepository.save(table);
     } catch (error) {
-      throw new BadRequestException({ code: 'TABLE_ALREADY_EXISTS'});
+      throw new BadRequestException({
+        code: 'TABLE_ALREADY_EXISTS',
+        label: 'table_already_exists_error_title',
+        message: 'table_already_exists_error_message',
+      });
     }
   }
 
@@ -83,7 +87,11 @@ export class TableService {
       table?.status === TableStatus.OCCUPIED &&
       status === TableStatus.OCCUPIED
     ) {
-      throw new BadRequestException({ code: 'TABLE_ALREADY_OCCUPIED' });
+      throw new BadRequestException({
+        code: 'TABLE_ALREADY_OCCUPIED',
+        label: 'table_already_occupied_error_title',
+        message: 'table_already_occupied_error_message',
+      });
     }
 
     table.status = status;

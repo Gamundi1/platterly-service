@@ -66,11 +66,14 @@ export class OrderController {
   updateOrderStatus(
     @Body('orderId', ParseUUIDPipe) orderId: string,
     @Body('status') status: OrderStatus,
-    @Req() request: AuthenticatedRequest
+    @Req() request: AuthenticatedRequest,
   ) {
-
     if (request.user.role === UserRole.USER) {
-      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
     }
 
     return this.orderService.updateOrderStatus(orderId, status);
@@ -78,9 +81,16 @@ export class OrderController {
 
   @UseGuards(AuthGuard)
   @Get('date/:date')
-  getOrdersByDate(@Param('date') date: string, @Req() request: AuthenticatedRequest) {
+  getOrdersByDate(
+    @Param('date') date: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
     if (request.user.role !== UserRole.HOST) {
-      throw new UnauthorizedException({ code: 'UNAUTHORIZED_USER' });
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
     }
     return this.orderService.getOrdersByDate(date);
   }
