@@ -21,6 +21,7 @@ import { CreateDrinkDto } from './product/drink/dto/create-drink.dto';
 import type { AuthenticatedRequest } from '@shared/types/authenticated-request.type';
 import { UserRole } from 'src/auth/user/enums/user-role.enum';
 import { UpdateMenuDto } from './dto/update-menu.dto';
+import { AllergenService } from './allergen/allergen.service';
 
 @Controller('v1/menu')
 export class MenuController {
@@ -28,6 +29,7 @@ export class MenuController {
     private readonly menuService: MenuService,
     private readonly dishService: DishService,
     private readonly drinkService: DrinkService,
+    private readonly allergenService: AllergenService,
   ) {}
 
   @UseGuards(AuthGuard)
@@ -163,5 +165,18 @@ export class MenuController {
       });
     }
     return this.drinkService.getAllDrinks();
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('allergen')
+  getAllAllergens(@Req() request: AuthenticatedRequest) {
+    if (request.user.role !== UserRole.ADMIN) {
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
+    }
+    return this.allergenService.getAllAllergens();
   }
 }

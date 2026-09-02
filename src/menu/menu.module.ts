@@ -11,6 +11,7 @@ import { DrinkService } from './product/drink/drink.service';
 import { Drink } from './product/drink/entities/drink.entity';
 import { Product } from './product/entities/product.entity';
 import { AuthModule } from 'src/auth/auth.module';
+import { AllergenService } from './allergen/allergen.service';
 
 @Module({
   controllers: [MenuController],
@@ -25,7 +26,7 @@ import { AuthModule } from 'src/auth/auth.module';
     ]),
     AuthModule,
   ],
-  providers: [MenuService, DishService, DrinkService],
+  providers: [MenuService, DishService, DrinkService, AllergenService],
   exports: [MenuService, TypeOrmModule],
 })
 export class MenuModule {}

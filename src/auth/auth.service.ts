@@ -24,22 +24,22 @@ export class AuthService {
   }
 
   async register(user: CreateUserDto): Promise<JwtUser | undefined> {
-    const regEx = /^(?=.*\d)(?=.*[a-zA-Z]).{12}$/;
+    const regEx = /^(?=.*\d)(?=.*[a-zA-Z]).{12,}$/;
 
     if (!regEx.test(user.password)) {
       throw new UnauthorizedException({
         code: 'PASSWORD_NOT_SATISFY_CONSTRAINTS',
+        label: 'password_not_satisfy_constraints_title',
+        message: 'password_not_satisfy_constraints_message',
       });
     }
 
-    let newUser;
-
     try {
-      newUser = await this.userService.registerUser(user);
+      await this.userService.registerUser(user);
     } catch (error) {
       return;
     }
-    return this.issueTokens(newUser.id, newUser.email);
+    return;
   }
 
   async refreshTokens(refreshToken: string): Promise<JwtUser> {

@@ -1,28 +1,27 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { DataBaseErrorCodes } from '@shared/interfaces/data-base-error-codes.interface';
+import { AllergenService } from 'src/menu/allergen/allergen.service';
+import { Allergen } from 'src/menu/allergen/entity/allergen.entity';
+import { Repository } from 'typeorm';
 import { CreateDrinkDto } from './dto/create-drink.dto';
 import { Drink } from './entities/drink.entity';
-import { DataBaseErrorCodes } from '@shared/interfaces/data-base-error-codes.interface';
-import { Allergen } from 'src/menu/allergen/entity/allergen.entity';
 
 @Injectable()
 export class DrinkService {
   constructor(
     @InjectRepository(Drink)
     private readonly drinkRepository: Repository<Drink>,
-
-    @InjectRepository(Allergen)
-    private readonly allergenRepository: Repository<Allergen>,
+    private readonly allergenService: AllergenService,
   ) {}
 
   async createDrink(createDrinkDto: CreateDrinkDto) {
     let allergens: Allergen[] = [];
 
     if (createDrinkDto.allergens) {
-      allergens = await this.allergenRepository.find({
-        where: { name: In(createDrinkDto.allergens) },
-      });
+      allergens = await this.allergenService.getAllergenByName(
+        createDrinkDto.allergens,
+      );
 
       if (allergens.length !== createDrinkDto.allergens.length) {
         throw new BadRequestException({
