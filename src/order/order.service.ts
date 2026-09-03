@@ -175,6 +175,15 @@ export class OrderService {
     user: User,
   ): Promise<any> {
     let orders: Order[] = await this.retrieveBookingOrders(bookingId);
+
+    if (orders.length === 0) {
+      throw new NotFoundException({
+        code: 'NO_ORDERS_IN_BOOKING',
+        label: 'no_orders_in_booking_error_title',
+        message: 'no_orders_in_booking_error_message',
+      });
+    }
+
     let totalPrice = 0;
     let orderToPay: string[] = [];
 
@@ -201,7 +210,7 @@ export class OrderService {
   }
 
   async payOrdersByIds(payOrderDto: PayOrdersDto): Promise<void> {
-    if (payOrderDto.orderIds.length === 0) {
+    if (payOrderDto.ordersToPay.length === 0) {
       throw new BadRequestException({
         code: 'NO_ORDERS_PROVIDED',
         label: 'no_orders_provided_error_title',
@@ -209,9 +218,11 @@ export class OrderService {
       });
     }
 
-    const orders = await this.orderRepository.findByIds(payOrderDto.orderIds);
+    const orders = await this.orderRepository.findByIds(
+      payOrderDto.ordersToPay,
+    );
 
-    if (orders.length !== payOrderDto.orderIds.length) {
+    if (orders.length !== payOrderDto.ordersToPay.length) {
       throw new NotFoundException({
         code: 'SOME_ORDERS_ARE_INVALID',
         label: 'some_orders_are_invalid_error_title',
@@ -294,7 +305,7 @@ export class OrderService {
   async updateOrderStatus(id: string, status: OrderStatus) {
     const order = await this.orderRepository.findOne({
       where: { id },
-      relations: ['booking', 'user'],
+      relations: ['booking', 'user', 'orderProducts', 'orderProducts.product'],
     });
 
     if (!order) {

@@ -83,10 +83,10 @@ export class OrderController {
   @UseGuards(AuthGuard)
   @Put('pay')
   payOrdersById(
-    @Body('ordersToPay') ordersToPay: PayOrdersDto,
+    @Body() ordersToPay: PayOrdersDto,
     @Req() request: AuthenticatedRequest,
   ) {
-    if (request.user.role === UserRole.USER) {
+    if (request.user.role !== UserRole.USER) {
       throw new UnauthorizedException({
         code: 'UNAUTHORIZED_USER',
         label: 'unauthorized_user_error_title',
