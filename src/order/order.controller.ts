@@ -16,6 +16,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderService } from './order.service';
 import { OrderStatus } from './enum/order-status.enum';
 import { UserRole } from 'src/auth/user/enums/user-role.enum';
+import { PayOrdersDto } from './dto/pay-orders.dto';
 
 @Controller('v1/order')
 export class OrderController {
@@ -80,12 +81,32 @@ export class OrderController {
   }
 
   @UseGuards(AuthGuard)
+  @Put('pay')
+  payOrdersById(
+    @Body() ordersToPay: PayOrdersDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (request.user.role !== UserRole.USER) {
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
+    }
+
+    return this.orderService.payOrdersByIds(ordersToPay);
+  }
+
+  @UseGuards(AuthGuard)
   @Get('date/:date')
   getOrdersByDate(
     @Param('date') date: string,
     @Req() request: AuthenticatedRequest,
   ) {
-    if (request.user.role !== UserRole.HOST) {
+    if (
+      request.user.role !== UserRole.WAITER &&
+      request.user.role !== UserRole.CHEF
+    ) {
       throw new UnauthorizedException({
         code: 'UNAUTHORIZED_USER',
         label: 'unauthorized_user_error_title',

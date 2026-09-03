@@ -66,6 +66,31 @@ export class TableService {
     return availableTables;
   }
 
+  async cleanTable(tableNumber: string) {
+    const table = await this.tableRepository.findOne({
+      where: { number: parseInt(tableNumber) },
+    });
+
+    if (!table) {
+      throw new BadRequestException({
+        code: 'TABLE_NOT_FOUND',
+        label: 'table_not_found_error_title',
+        message: 'table_not_found_error_message',
+      });
+    }
+
+    if (table.status !== TableStatus.NEEDS_CLEANING) {
+      throw new BadRequestException({
+        code: 'TABLE_NOT_DIRTY',
+        label: 'table_not_dirty_error_title',
+        message: 'table_not_dirty_error_message',
+      });
+    }
+
+    table.status = TableStatus.FREE;
+    return this.tableRepository.save(table);
+  }
+
   async updateTableStatus(
     tableNumber: number,
     status: TableStatus,

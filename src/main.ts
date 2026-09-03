@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
@@ -8,6 +9,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
+  app.use(helmet());
   app.enableCors({
     origin: process.env.ENABLED_CLIENT_DOMAIN ?? 'http://localhost:4200',
     credentials: true,

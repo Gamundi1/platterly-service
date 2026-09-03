@@ -100,8 +100,7 @@ export class BookingController {
   ) {
     if (
       request.user.role !== UserRole.HOST &&
-      request.user.role === UserRole.USER &&
-      status !== BookingStatus.CANCELLED
+      request.user.role === UserRole.USER
     ) {
       throw new UnauthorizedException({
         code: 'UNAUTHORIZED_USER',

@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Put,
   Req,
   UnauthorizedException,
   UseGuards,
@@ -37,5 +38,21 @@ export class TableController {
   @Get('available/:date')
   findAllAvailableTables(@Param('date') date: string) {
     return this.tableService.findAllAvailableTablesByDate(date);
+  }
+
+  @UseGuards(AuthGuard)
+  @Put('clean/:tableNumber')
+  cleanTable(
+    @Param('tableNumber') tableNumber: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (request.user.role !== UserRole.WAITER) {
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED_USER',
+        label: 'unauthorized_user_error_title',
+        message: 'unauthorized_user_error_message',
+      });
+    }
+    return this.tableService.cleanTable(tableNumber);
   }
 }

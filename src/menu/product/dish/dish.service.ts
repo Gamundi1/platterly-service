@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataBaseErrorCodes } from '@shared/interfaces/data-base-error-codes.interface';
+import { AllergenService } from 'src/menu/allergen/allergen.service';
+import { Allergen } from 'src/menu/allergen/entity/allergen.entity';
+import { In, Repository } from 'typeorm';
 import { CreateDishDto } from './dto/create-dish.dto';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
-import { Ingredient } from './entities/ingredient.entity';
-import { DataBaseErrorCodes } from '@shared/interfaces/data-base-error-codes.interface';
 import { Dish } from './entities/dish.entity';
-import { Allergen } from 'src/menu/allergen/entity/allergen.entity';
+import { Ingredient } from './entities/ingredient.entity';
 
 @Injectable()
 export class DishService {
@@ -14,11 +15,9 @@ export class DishService {
     @InjectRepository(Ingredient)
     private readonly ingredientRepository: Repository<Ingredient>,
 
-    @InjectRepository(Allergen)
-    private readonly allergenRepository: Repository<Allergen>,
-
     @InjectRepository(Dish)
     private readonly dishRepository: Repository<Dish>,
+    private readonly allergenService: AllergenService,
   ) {}
 
   async getAllDishes() {
@@ -35,6 +34,11 @@ export class DishService {
       dish.ingredients = ingredients as any;
     });
     return dishes;
+  }
+
+  async getAllIngredients() {
+    let ingredients = await this.ingredientRepository.find();
+    return ingredients;
   }
 
   async createDish(createDishDto: CreateDishDto) {
@@ -72,9 +76,9 @@ export class DishService {
     let allergens: Allergen[] = [];
 
     if (createIngredientDto.allergens) {
-      allergens = await this.allergenRepository.find({
-        where: { name: In(createIngredientDto.allergens) },
-      });
+      allergens = await this.allergenService.getAllergenByName(
+        createIngredientDto.allergens,
+      );
 
       if (allergens.length !== createIngredientDto.allergens.length) {
         throw new BadRequestException({
